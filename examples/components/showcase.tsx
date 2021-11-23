@@ -12,7 +12,7 @@ export default function Showcase({ primitive }: { primitive: Primitive }) {
         <Canvas style={{ minHeight: 500 }}>
             <OrbitControls />
             <gridHelper />
-            <primitive object={primitive.toObject3D()}></primitive>
+            <primitive object={primitive.toObject3D()} />
         </Canvas>
     )
 }

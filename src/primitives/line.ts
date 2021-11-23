@@ -1,10 +1,9 @@
-import { Matrix4, Vector3, Object3D, Line, BufferGeometry } from "three"
-import { PointPrimitive, Primitive, setupObject3D, YAXIS } from "."
+import { Matrix4, Vector3, Object3D, Line, BufferGeometry, LineBasicMaterial } from "three"
+import { ComponentType, hasComponentType, PointPrimitive, Primitive, setupObject3D, YAXIS } from "."
 import { computeDirectionMatrix, makeTranslationMatrix } from "../math"
 
-console.log(PointPrimitive)
-
 const helperVector = new Vector3()
+const helperMatrix = new Matrix4()
 
 /**
  * line in x direction
@@ -22,34 +21,53 @@ export class LinePrimitive extends Primitive {
         return new LinePrimitive(matrix, length)
     }
 
-    getGeometrySize(target: Vector3): void {
-        target.set(0, this.length, 0)
+    get pointAmount(): number {
+        return 2
     }
+    getPoint(index: number, target: Vector3): void {
+        if (index === 0) {
+            target.setFromMatrixPosition(this.matrix)
+        } else if (index === 1) {
+            helperMatrix.copy(this.matrix)
+            helperMatrix.multiply(makeTranslationMatrix(this.length, 0, 0))
+            target.setFromMatrixPosition(helperMatrix)
+        } else {
+            throw `out of index ${index} when using "getPoint"`
+        }
+    }
+
+    /*getGeometrySize(target: Vector3): void {
+        target.set(0, this.length, 0)
+    }*/
 
     clone(): Primitive {
         return new LinePrimitive(this.matrix.clone(), this.length)
     }
 
-    /*extrude(extruder: (vec3: Vector3) => void): Primitive {
-        return FacePrimitive.fromPoints()
-    }*/
+    boolean(operation: "union" | "intersect" | "difference", _3d: boolean): Primitive {
+        throw new Error("Method not implemented.")
+    }
 
-    components(type: "points" | "lines" | "faces"): Primitive[] {
-        switch (type) {
-            case "faces":
-                return []
-            case "lines":
-                return [this.clone()]
-            case "points":
-                const end = new PointPrimitive(this.matrix.clone())
-                end.applyMatrix(makeTranslationMatrix(0, this.length, 0))
-                return [new PointPrimitive(this.matrix.clone()), end]
+    protected componentArray(type: number): Primitive[] {
+        if (hasComponentType(type, ComponentType.Line)) {
+            return [this.clone()]
+        } else if (hasComponentType(type, ComponentType.Point)) {
+            const end = new PointPrimitive(this.matrix.clone())
+            end.applyMatrix(makeTranslationMatrix(this.length, 0, 0))
+            return [new PointPrimitive(this.matrix.clone()), end]
+        } else {
+            return []
         }
     }
 
     toObject3D(): Object3D {
         return setupObject3D(
-            new Line(new BufferGeometry().setFromPoints([new Vector3(), new Vector3(0, this.length, 0)])),
+            new Line(
+                new BufferGeometry().setFromPoints([new Vector3(), new Vector3(this.length, 0, 0)]),
+                new LineBasicMaterial({
+                    color: 0xff0000,
+                })
+            ),
             this.matrix
         )
     }

@@ -19,12 +19,12 @@ const eulerHelper = new Euler()
 }*/
 
 export function computeDirectionMatrix(
-    normalizedXAxis: Vector3,
-    normalizedYAxis: Vector3,
+    normalizeDirectionAxis: Vector3,
+    normalizedUPAxis: Vector3,
     matrix = matrixHelper
 ): Matrix4 {
-    vectorHelper.crossVectors(normalizedXAxis, normalizedYAxis)
-    return matrix.makeBasis(normalizedXAxis, normalizedYAxis, vectorHelper)
+    vectorHelper.crossVectors(normalizeDirectionAxis, normalizedUPAxis)
+    return matrix.makeBasis(normalizeDirectionAxis, normalizedUPAxis, vectorHelper)
 }
 
 export function makeTranslationMatrix(x: number, y: number, z: number, matrix = matrixHelper): Matrix4 {

@@ -26,7 +26,7 @@ const restSize = new Vector3()
 const moveVector = new Vector3()
 const vectorHelper = new Vector3()
 
-export function Split(
+/*export function Split(
     primitive: Primitive,
     axis: Axis,
     generatePrimitive: (matrix: Matrix4, index: number, x: number, y: number, z: number) => Primitive
@@ -48,3 +48,4 @@ export function Split(
     }
     return generatedPrimitives
 }
+*/

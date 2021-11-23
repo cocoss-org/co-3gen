@@ -1,9 +1,21 @@
 # Hello World!
 
 import Showcase from "../components/showcase"
-import { LinePrimitive } from "co-3gen"
-import { Matrix4 } from "three"
+import { LinePrimitive, PointPrimitive, FacePrimitive, ComponentType } from "co-3gen"
+import { Matrix4, Shape, Vector2 } from "three"
+const points = new FacePrimitive(
+    new Matrix4(),
+    new Shape([new Vector2(-1, 1), new Vector2(1, 1), new Vector2(2, -1), new Vector2(0, 0)])
+).components(ComponentType.Line)
 
-<Showcase primitive={new LinePrimitive(new Matrix4(), 2)} />
+<Showcase primitive={points} />
 
 Test123
+
+## Showing a cube
+
+import { faces } from "../components/test"
+
+<Showcase primitive={faces} />
+
+My explanation ..

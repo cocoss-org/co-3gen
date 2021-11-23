@@ -1,32 +1,50 @@
-import { Matrix4, Vector3, Object3D, Points, BufferGeometry } from "three"
-import { Primitive, setupObject3D, ZERO } from "."
-import { LinePrimitive } from "./line"
-
-const vectorHelper = new Vector3()
+import { Matrix4, Vector3, Object3D, Points, BufferGeometry, PointsMaterial } from "three"
+import { ComponentType, hasComponentType, Primitive, setupObject3D } from "."
 
 export class PointPrimitive extends Primitive {
     constructor(public readonly matrix: Matrix4) {
         super()
     }
 
-    getGeometrySize(target: Vector3): void {
+    get pointAmount(): number {
+        return 1
+    }
+
+    getPoint(index: number, target: Vector3): void {
+        if (index === 0) {
+            target.setFromMatrixPosition(this.matrix)
+        } else {
+            throw `out of index ${index} when using "getPoint"`
+        }
+    }
+
+    /*getGeometrySize(target: Vector3): void {
         target.set(0, 0, 0)
-    }
+    }*/
 
-    extrude(extruder: (vec3: Vector3) => void): Primitive {
-        extruder(vectorHelper.set(0, 0, 0))
-        return LinePrimitive.fromPoints(this.matrix.clone(), ZERO, vectorHelper)
-    }
-
-    components(type: "points" | "lines" | "faces"): Primitive[] {
-        if (type === "points") {
+    protected componentArray(type: number): Primitive[] {
+        if (hasComponentType(type, ComponentType.Point)) {
             return [this.clone()]
         } else {
             return []
         }
     }
+
+    boolean(operation: "union" | "intersect" | "difference", _3d: boolean): Primitive {
+        throw new Error("Method not implemented.")
+    }
+
     toObject3D(): Object3D {
-        return setupObject3D(new Points(new BufferGeometry().setFromPoints([new Vector3()])), this.matrix)
+        return setupObject3D(
+            new Points(
+                new BufferGeometry().setFromPoints([new Vector3()]),
+                new PointsMaterial({
+                    color: 0xff0000,
+                    size: 0.2,
+                })
+            ),
+            this.matrix
+        )
     }
 
     clone(): Primitive {
