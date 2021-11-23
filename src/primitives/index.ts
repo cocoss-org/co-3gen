@@ -1,0 +1,6 @@
+export * from "./primitive"
+//export * from "./empty"
+export * from "./point"
+export * from "./line"
+export * from "./face"
+export * from "./combined"

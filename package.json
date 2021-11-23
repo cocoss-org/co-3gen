@@ -1,0 +1,16 @@
+{
+    "name": "co-3gen",
+    "version": "1.0.0",
+    "scripts": {
+        "build": "tsc"
+    },
+    "author": "Bela Bohlender",
+    "dependencies": {
+        "three": "^0.134.0",
+        "three-stdlib": "^2.5.9"
+    },
+    "devDependencies": {
+        "@types/three": "^0.134.0",
+        "typescript": "^4.4.4"
+    }
+}
