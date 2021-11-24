@@ -11,6 +11,7 @@ import {
     MeshBasicMaterial,
     Plane,
     DoubleSide,
+    MeshPhongMaterial,
 } from "three"
 import {
     CombinedPrimitive,
@@ -36,23 +37,31 @@ const quaternionHelper = new Quaternion()
  */
 export class FacePrimitive extends Primitive {
     private points = this.shape.getPoints(5)
-
-    //TODO: holes
+    private holes = this.shape.getPointsHoles(5)
 
     constructor(public readonly matrix: Matrix4, private readonly shape: Shape) {
         super()
     }
 
     get pointAmount(): number {
-        return this.points.length
+        return this.points.length + this.holes.reduce((prev, hole) => prev + hole.length, 0)
     }
 
     getPoint(index: number, target: Vector3): void {
-        const p = this.points[index]
-        if (p == null) {
+        let offset: number = 0
+        let point: Vector2 | undefined = undefined
+        for (let i = 0; i < this.holes.length + 1; i++) {
+            const polygon = i === 0 ? this.points : this.holes[i - 1]
+            if (offset <= index && index < offset + polygon.length) {
+                point = polygon[index - offset]
+                break
+            }
+            offset += polygon.length
+        }
+        if (point == null) {
             throw `out of index ${index} when using "getPoint"`
         }
-        target.set(p.x, 0, p.y)
+        target.set(point.x, 0, point.y)
         target.applyMatrix4(this.matrix)
     }
 
@@ -107,8 +116,11 @@ export class FacePrimitive extends Primitive {
         return [
             [
                 {
-                    regions: [this.points.map((p) => [p.x, p.y] as [number, number])],
-                    inverted: false, // is this polygon inverted?
+                    regions: [
+                        this.points.map((p) => [p.x, p.y] as [number, number]),
+                        ...this.holes.map((hole) => hole.map((p) => [p.x, p.y] as [number, number])),
+                    ],
+                    inverted: false,
                 },
                 this.matrix,
             ],
@@ -136,15 +148,19 @@ export class FacePrimitive extends Primitive {
         if (hasComponentType(type, ComponentType.Face)) {
             return [this.clone()]
         } else if (hasComponentType(type, ComponentType.Line)) {
-            const points = this.shape.extractPoints(5).shape
-            return points.map((p1, i) => {
-                const p2 = points[(i + 1) % points.length]
-                return LinePrimitive.fromPoints(
-                    this.matrix.clone(),
-                    helperVector.set(p1.x, 0, p1.y),
-                    helper2Vector.set(p2.x, 0, p2.y)
+            const polygons = [this.points, ...this.holes]
+            return polygons
+                .map((polygon) =>
+                    polygon.map((p1, i) => {
+                        const p2 = polygon[(i + 1) % polygon.length]
+                        return LinePrimitive.fromPoints(
+                            this.matrix.clone(),
+                            helperVector.set(p1.x, 0, p1.y),
+                            helper2Vector.set(p2.x, 0, p2.y)
+                        )
+                    })
                 )
-            })
+                .reduce((v1, v2) => v1.concat(v2), [])
         } else if (hasComponentType(type, ComponentType.Point)) {
             return this.shape
                 .extractPoints(5)
@@ -161,7 +177,7 @@ export class FacePrimitive extends Primitive {
         return setupObject3D(
             new Mesh(
                 this.getGeometry(false),
-                new MeshBasicMaterial({
+                new MeshPhongMaterial({
                     color: 0xff0000,
                 })
             ),

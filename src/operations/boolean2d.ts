@@ -1,9 +1,9 @@
 import { CombinedPrimitive, FacePrimitive, Polygon, Primitive } from ".."
 //@ts-ignore
 import PolyBool from "polybooljs"
-import { Matrix4, Plane, Shape, Vector2, Vector3 } from "three"
+import { Matrix4, Path, Plane, Shape, Vector2, Vector3 } from "three"
 
-PolyBool.epsilon(0.00001);
+PolyBool.epsilon(0.00001)
 
 const helperPlane = new Plane()
 const helperMatrix = new Matrix4()
@@ -73,17 +73,16 @@ export function boolean2d(
     helperMatrix.copy(p1.matrix).invert()
     return new CombinedPrimitive(
         p1.matrix.clone(),
-        results
-            .map(([polygons, matrix]) =>
-                polygons.regions.map(
-                    (polygon) =>
-                        new FacePrimitive(
-                            matrix.clone().premultiply(helperMatrix),
-                            new Shape(polygon.map((position) => new Vector2(...position))) //TODO inverted/holes
-                        )
-                )
+        results.map(([polygon, matrix]) => {
+            const shape = new Shape(
+                polygon.regions[polygon.regions.length - 1].map((position) => new Vector2(...position))
             )
-            .reduce((v1, v2) => v1.concat(v2))
+            shape.holes = polygon.regions
+                .slice(0, -1)
+                .map((region) => new Path().setFromPoints(region.map((p) => new Vector2(...p))))
+            //console.log(shape.holes.length)
+            return new FacePrimitive(matrix.clone().premultiply(helperMatrix), shape)
+        })
     )
 }
 

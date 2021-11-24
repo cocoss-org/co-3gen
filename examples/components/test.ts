@@ -8,6 +8,7 @@ import {
     makeRotationMatrix,
     Primitive,
     boolean3d,
+    makeScaleMatrix,
 } from "co-3gen"
 import { BoxBufferGeometry, Matrix4, Plane, Shape, Vector2 } from "three"
 
@@ -36,17 +37,18 @@ for (let i = 0; i < 10; i++) {
         .clone()
         .applyMatrix(makeTranslationMatrix(0, 1, 0))
         .applyMatrix(makeRotationMatrix(0, 0.2, 0))
+        .applyMatrix(makeScaleMatrix(0.9, 0.9, 0.9))
     results.push(connect(previous, current))
     previous = current
 }
 
-export const faces = new CombinedPrimitive(new Matrix4(), results).components(ComponentType.Line)
+export const faces = new CombinedPrimitive(new Matrix4(), results)//.components(ComponentType.Line)
 
 const x = CombinedPrimitive.fromGeometry(new Matrix4(), new BoxBufferGeometry())
     .setMatrix(makeTranslationMatrix(0.1, 0.1, 0.1, new Matrix4()))
     .applyMatrix(makeRotationMatrix(0, 0.2, 0))
-const y = CombinedPrimitive.fromGeometry(new Matrix4(), new BoxBufferGeometry()).setMatrix(
-    makeTranslationMatrix(-0.1, -0.1, -0.1, new Matrix4())
-)
+const y = CombinedPrimitive.fromGeometry(new Matrix4(), new BoxBufferGeometry())
+    .setMatrix(makeTranslationMatrix(-0.1, 0, -0.1, new Matrix4()))
+    .applyMatrix(makeScaleMatrix(0.7, 0.7, 0.7))
 
-export const test2 = boolean3d("subtract", x, y).components(ComponentType.Line)
+export const test2 = boolean3d("subtract", x, y)//.components(ComponentType.Line)

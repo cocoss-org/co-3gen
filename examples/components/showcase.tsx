@@ -9,13 +9,13 @@ const OrbitControls = dynamic(
     { ssr: false }
 )
 
-
-
 export default function Showcase({ primitive }: { primitive: Primitive }) {
     return (
         <Canvas style={{ minHeight: 500 }}>
             <OrbitControls />
             <gridHelper />
+            <pointLight position={[3, 3, 3]} />
+            <ambientLight />
             <primitive object={primitive.toObject3D()} />
         </Canvas>
     )
