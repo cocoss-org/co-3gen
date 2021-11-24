@@ -6,7 +6,7 @@ export function getTrianglesFromGeometry(bufferGeometry: BufferGeometry): Array<
     let toTriangle = (
         index != null ? getTriangleFromIndexGeometry.bind(null, index) : getTriangleFromUnindexGeometry
     ).bind(null, position)
-    return new Array(index?.count ?? position.count).fill(null).map((_, i) => toTriangle(i * 3))
+    return new Array((index?.count ?? position.count) / 3).fill(null).map((_, i) => toTriangle(i * 3))
 }
 
 function getTriangleFromIndexGeometry(

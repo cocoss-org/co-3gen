@@ -1,6 +1,12 @@
-import { Matrix4, Object3D, BufferGeometry, Vector3 } from "three"
-import { Primitive, setupObject3D } from "."
-import { mergeBufferGeometries } from "three/examples/jsm/utils/BufferGeometryUtils"
+import { Matrix4, Object3D, BufferGeometry, Vector3, Plane } from "three"
+import { FacePrimitive, Primitive, setupObject3D } from "."
+import { mergeBufferGeometries, mergeVertices } from "three/examples/jsm/utils/BufferGeometryUtils"
+import { getTrianglesFromGeometry } from ".."
+import { Polygon } from "polygon-clipping"
+import { boolean2d } from "../operations/boolean2d"
+
+const helperPlane = new Plane()
+const helperMatrix = new Matrix4()
 
 export class CombinedPrimitive extends Primitive {
     constructor(public readonly matrix: Matrix4, private readonly primitives: Array<Primitive>) {
@@ -9,6 +15,24 @@ export class CombinedPrimitive extends Primitive {
 
     get pointAmount(): number {
         return this.primitives.reduce((prev, p) => prev + p.pointAmount, 0)
+    }
+
+    static fromGeometry(matrix: Matrix4, geometry: BufferGeometry): Primitive {
+        const triangles = getTrianglesFromGeometry(geometry)
+        if (triangles.length === 0) {
+            return new CombinedPrimitive(matrix, [])
+        }
+        return boolean2d(
+            "union",
+            ...(triangles.map((triangle) => {
+                helperPlane.setFromCoplanarPoints(triangle.a, triangle.b, triangle.c)
+                return FacePrimitive.fromPointsOnPlane(matrix.clone(), helperPlane, [
+                    triangle.a,
+                    triangle.b,
+                    triangle.c,
+                ])
+            }) as [Primitive])
+        )
     }
 
     getPoint(index: number, target: Vector3): void {
@@ -25,14 +49,10 @@ export class CombinedPrimitive extends Primitive {
         throw `out of index ${index} when using "getPoint"`
     }
 
-    boolean(operation: "union" | "intersect" | "difference", _3d: boolean): Primitive {
-        throw new Error("Method not implemented.")
-    }
-
     componentArray(type: number): Array<Primitive> {
         let results = this.primitives
             .map((primitive) => primitive["componentArray"](type))
-            .reduce((v1, v2) => v1.concat(v2))
+            .reduce((v1, v2) => v1.concat(v2), [])
         results.forEach((p) => p.matrix.premultiply(this.matrix))
         return results
     }
@@ -61,15 +81,27 @@ export class CombinedPrimitive extends Primitive {
     }
 
     protected computeGeometry(): BufferGeometry | undefined {
-        const disposableBuffers = this.primitives
-            .map((primitive) => primitive.getGeometry(true)?.applyMatrix4(primitive.matrix))
-            .filter(filterNull)
+        const disposableBuffers = this.primitives.map((primitive) => primitive.getGeometry(false)).filter(filterNull)
         if (disposableBuffers.length === 0) {
             return undefined
         }
-        const result = mergeBufferGeometries(disposableBuffers)!
-        disposableBuffers.forEach((buffer) => buffer.dispose())
+        const merged = mergeBufferGeometries(disposableBuffers)!
+        const result = mergeVertices(merged)
+        merged.dispose()
         return result
+    }
+
+    protected computePolygons(): Array<[Polygon, Matrix4]> {
+        return this.primitives
+            .map((primitive) =>
+                primitive
+                    .getPolygons()
+                    .map<[Polygon, Matrix4]>(([geometry, matrix]) => [
+                        geometry,
+                        matrix.clone().premultiply(this.matrix),
+                    ])
+            )
+            .reduce((v1, v2) => v1.concat(v2), [])
     }
 }
 

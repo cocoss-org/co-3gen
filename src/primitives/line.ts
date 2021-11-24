@@ -1,6 +1,7 @@
 import { Matrix4, Vector3, Object3D, Line, BufferGeometry, LineBasicMaterial } from "three"
-import { ComponentType, hasComponentType, PointPrimitive, Primitive, setupObject3D, YAXIS } from "."
+import { CombinedPrimitive, ComponentType, hasComponentType, PointPrimitive, Primitive, setupObject3D, YAXIS } from "."
 import { computeDirectionMatrix, makeTranslationMatrix } from "../math"
+import { Polygon } from "polygon-clipping"
 
 const helperVector = new Vector3()
 const helperMatrix = new Matrix4()
@@ -44,10 +45,6 @@ export class LinePrimitive extends Primitive {
         return new LinePrimitive(this.matrix.clone(), this.length)
     }
 
-    boolean(operation: "union" | "intersect" | "difference", _3d: boolean): Primitive {
-        throw new Error("Method not implemented.")
-    }
-
     protected componentArray(type: number): Primitive[] {
         if (hasComponentType(type, ComponentType.Line)) {
             return [this.clone()]
@@ -74,5 +71,9 @@ export class LinePrimitive extends Primitive {
 
     protected computeGeometry(): BufferGeometry | undefined {
         return undefined
+    }
+
+    protected computePolygons(): Array<[Polygon, Matrix4]> {
+        return []
     }
 }

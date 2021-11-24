@@ -10,9 +10,21 @@ import {
     Quaternion,
     MeshBasicMaterial,
     Plane,
+    DoubleSide,
 } from "three"
-import { ComponentType, hasComponentType, LinePrimitive, PointPrimitive, Primitive, setupObject3D, YAXIS } from "."
+import {
+    CombinedPrimitive,
+    ComponentType,
+    hasComponentType,
+    LinePrimitive,
+    PointPrimitive,
+    Primitive,
+    setupObject3D,
+    YAXIS,
+} from "."
 import { makeQuanterionMatrix, makeTranslationMatrix } from "../math"
+import { Polygon, Pair } from "polygon-clipping"
+import { getTrianglesFromGeometry } from ".."
 
 const helperVector = new Vector3()
 const helper2Vector = new Vector3()
@@ -23,6 +35,8 @@ const quaternionHelper = new Quaternion()
  */
 export class FacePrimitive extends Primitive {
     private points = this.shape.getPoints(5)
+
+    //TODO: holes
 
     constructor(public readonly matrix: Matrix4, private readonly shape: Shape) {
         super()
@@ -52,7 +66,7 @@ export class FacePrimitive extends Primitive {
         return new FacePrimitive(
             matrix
                 .multiply(makeQuanterionMatrix(quaternionHelper.invert()))
-                .multiply(makeTranslationMatrix(0, plane.constant, 0)),
+                .multiply(makeTranslationMatrix(0, -plane.constant, 0)),
             shape
         )
     }
@@ -75,10 +89,6 @@ export class FacePrimitive extends Primitive {
         return new FacePrimitive(this.matrix.clone(), this.shape.clone())
     }
 
-    boolean(operation: "union" | "intersect" | "difference", _3d: boolean): Primitive {
-        throw new Error("Method not implemented.")
-    }
-
     protected computeGeometry(): BufferGeometry | undefined {
         const geometry = new ShapeBufferGeometry(this.shape)
         let temp: number
@@ -90,6 +100,10 @@ export class FacePrimitive extends Primitive {
         }
         geometry.rotateX(Math.PI / 2)
         return geometry
+    }
+
+    protected computePolygons(): Array<[Polygon, Matrix4]> {
+        return [[[this.points.map<Pair>((p) => [p.x, p.y])], this.matrix]]
     }
 
     /*extrude(extruder: (vec3: Vector3) => void): Primitive {
@@ -109,7 +123,7 @@ export class FacePrimitive extends Primitive {
         ])
     }*/
 
-    componentArray(type: number): Array<Primitive> {
+    protected componentArray(type: number): Array<Primitive> {
         if (hasComponentType(type, ComponentType.Face)) {
             return [this.clone()]
         } else if (hasComponentType(type, ComponentType.Line)) {
@@ -139,39 +153,10 @@ export class FacePrimitive extends Primitive {
             new Mesh(
                 this.getGeometry(false),
                 new MeshBasicMaterial({
-                    color: 0xff0000,
+                    color: 0xff0000
                 })
             ),
-            this.matrix
+            new Matrix4()
         )
     }
 }
-
-const helperPlane = new Plane()
-
-/*function trianglesToPrimitives(matrix: Matrix4, triangles: Array<Triangle>): Array<Primitive> {
-    const subGroupes = triangles.reduce((prev, triangle) => {
-        triangle.getPlane(helperPlane)
-        const group = prev.find(
-            (group) =>
-                Math.abs(group.normal.dot(helperPlane.normal)) < 0.001 &&
-                Math.abs(helperPlane.constant - group.constant) < 0.001
-        )
-        if (group != null) {
-            group.triangles.push(triangle)
-            return prev
-        } else {
-            return [
-                ...prev,
-                {
-                    constant: helperPlane.constant,
-                    normal: new Vector3().copy(helperPlane.normal),
-                    triangles: [triangle],
-                },
-            ]
-        }
-    }, [] as Array<{ triangles: Array<Triangle>; normal: Vector3; constant: number }>)
-    return subGroupes.map((group) =>
-        FacePrimitive.fromPlanarTriangles(matrix, group.normal, group.constant, group.triangles)
-    )
-}*/

@@ -1,5 +1,6 @@
 import { Matrix4, Vector3, Object3D, Points, BufferGeometry, PointsMaterial } from "three"
-import { ComponentType, hasComponentType, Primitive, setupObject3D } from "."
+import { CombinedPrimitive, ComponentType, hasComponentType, Primitive, setupObject3D } from "."
+import { Polygon } from "polygon-clipping"
 
 export class PointPrimitive extends Primitive {
     constructor(public readonly matrix: Matrix4) {
@@ -30,10 +31,6 @@ export class PointPrimitive extends Primitive {
         }
     }
 
-    boolean(operation: "union" | "intersect" | "difference", _3d: boolean): Primitive {
-        throw new Error("Method not implemented.")
-    }
-
     toObject3D(): Object3D {
         return setupObject3D(
             new Points(
@@ -53,5 +50,9 @@ export class PointPrimitive extends Primitive {
 
     protected computeGeometry(): BufferGeometry | undefined {
         return undefined
+    }
+
+    protected computePolygons(): Array<[Polygon, Matrix4]> {
+        return []
     }
 }

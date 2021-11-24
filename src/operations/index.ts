@@ -3,4 +3,5 @@
 //export * from "./split"
 export * from "./transform"
 export * from "./connect"
+export * from "./boolean3d"
 //export * from "./csg"
