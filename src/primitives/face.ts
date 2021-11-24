@@ -18,13 +18,14 @@ import {
     hasComponentType,
     LinePrimitive,
     PointPrimitive,
+    Polygon,
     Primitive,
     setupObject3D,
     YAXIS,
 } from "."
 import { makeQuanterionMatrix, makeTranslationMatrix } from "../math"
-import { Polygon, Pair } from "polygon-clipping"
-import { getTrianglesFromGeometry } from ".."
+//@ts-ignore
+import PolyBool from "polybooljs"
 
 const helperVector = new Vector3()
 const helper2Vector = new Vector3()
@@ -103,7 +104,15 @@ export class FacePrimitive extends Primitive {
     }
 
     protected computePolygons(): Array<[Polygon, Matrix4]> {
-        return [[[this.points.map<Pair>((p) => [p.x, p.y])], this.matrix]]
+        return [
+            [
+                {
+                    regions: [this.points.map((p) => [p.x, p.y] as [number, number])],
+                    inverted: false, // is this polygon inverted?
+                },
+                this.matrix,
+            ],
+        ]
     }
 
     /*extrude(extruder: (vec3: Vector3) => void): Primitive {
@@ -153,7 +162,7 @@ export class FacePrimitive extends Primitive {
             new Mesh(
                 this.getGeometry(false),
                 new MeshBasicMaterial({
-                    color: 0xff0000
+                    color: 0xff0000,
                 })
             ),
             new Matrix4()

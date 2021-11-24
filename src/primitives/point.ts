@@ -1,6 +1,5 @@
 import { Matrix4, Vector3, Object3D, Points, BufferGeometry, PointsMaterial } from "three"
-import { CombinedPrimitive, ComponentType, hasComponentType, Primitive, setupObject3D } from "."
-import { Polygon } from "polygon-clipping"
+import { ComponentType, hasComponentType, Polygon, Primitive, setupObject3D } from "."
 
 export class PointPrimitive extends Primitive {
     constructor(public readonly matrix: Matrix4) {

@@ -1,7 +1,6 @@
 import { Matrix4, Vector3, Object3D, Line, BufferGeometry, LineBasicMaterial } from "three"
-import { CombinedPrimitive, ComponentType, hasComponentType, PointPrimitive, Primitive, setupObject3D, YAXIS } from "."
+import { ComponentType, hasComponentType, PointPrimitive, Polygon, Primitive, setupObject3D, YAXIS } from "."
 import { computeDirectionMatrix, makeTranslationMatrix } from "../math"
-import { Polygon } from "polygon-clipping"
 
 const helperVector = new Vector3()
 const helperMatrix = new Matrix4()

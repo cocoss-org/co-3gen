@@ -2,7 +2,6 @@ import { Matrix4, Object3D, BufferGeometry, Vector3, Plane } from "three"
 import { FacePrimitive, Primitive, setupObject3D } from "."
 import { mergeBufferGeometries, mergeVertices } from "three/examples/jsm/utils/BufferGeometryUtils"
 import { getTrianglesFromGeometry } from ".."
-import { Polygon } from "polygon-clipping"
 import { boolean2d } from "../operations/boolean2d"
 
 const helperPlane = new Plane()
@@ -91,15 +90,12 @@ export class CombinedPrimitive extends Primitive {
         return result
     }
 
-    protected computePolygons(): Array<[Polygon, Matrix4]> {
+    protected computePolygons(): Array<[any, Matrix4]> {
         return this.primitives
             .map((primitive) =>
                 primitive
                     .getPolygons()
-                    .map<[Polygon, Matrix4]>(([geometry, matrix]) => [
-                        geometry,
-                        matrix.clone().premultiply(this.matrix),
-                    ])
+                    .map<[any, Matrix4]>(([geometry, matrix]) => [geometry, matrix.clone().premultiply(this.matrix)])
             )
             .reduce((v1, v2) => v1.concat(v2), [])
     }
