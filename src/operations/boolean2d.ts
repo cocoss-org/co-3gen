@@ -16,23 +16,18 @@ function multipleBoolean(
     operation: "union" | "intersect" | "difference" | "differenceRev" | "xor",
     main: Segment,
     ...rest: Array<Segment>
-): Array<Polygon> {
+): Segment {
     let segments = main
-    rest.forEach((p) => {
-        segments = PolyBool[`select${capitalize(operation)}`](PolyBool.combine(segments, p))
+    rest.forEach((segment) => {
+        segments = PolyBool[`select${capitalize(operation)}`](PolyBool.combine(segments, segment))
     })
-    return segmentToPoly(segments)
+    return segments
 }
 
-function segmentToPoly(segments: Segment): Array<Polygon> {
-    const result = PolyBool.polygon(segments)
-    if (Array.isArray(result)) {
-        return result
-    }
-    return [result]
+type Segment = {
+    segments: Array<any>
+    inverted: boolean
 }
-
-type Segment = {}
 
 export function boolean2d(
     operation: "union" | "intersect" | "difference" | "differenceRev" | "xor",
@@ -46,7 +41,7 @@ export function boolean2d(
     const foreignGroups = group(foreignPolygons)
 
     const results = ownGroups
-        .map<Array<[Polygon, Matrix4]>>(([segment, plane, matrix]) => {
+        .map<[Segment, Matrix4]>(([segments, plane, matrix]) => {
             const matches = foreignGroups.filter(([_p, groupPlane], i) => {
                 const match = planeIsEqual(plane, groupPlane)
                 if (match) {
@@ -55,34 +50,29 @@ export function boolean2d(
                 return match
             })
             if (matches.length === 0) {
-                return segmentToPoly(segment).map((p: Polygon) => [p, matrix])
+                return [segments, matrix]
             } else {
-                return multipleBoolean(operation, segment, ...matches.map(([s]) => s)).map((polygon) => [
-                    polygon,
-                    matrix,
-                ])
+                return [multipleBoolean(operation, segments, ...matches.map(([s]) => s)), matrix]
             }
         })
-        .concat(
-            foreignGroups.map<Array<[Polygon, Matrix4]>>(([segment, _, matrix]) =>
-                segmentToPoly(segment).map((p: Polygon) => [p, matrix])
-            )
-        )
-        .reduce((v1, v2) => v1.concat(v2), [])
+        .concat(foreignGroups.map<[Segment, Matrix4]>(([segment, _, matrix]) => [segment, matrix]))
 
     helperMatrix.copy(p1.matrix).invert()
     return new CombinedPrimitive(
         p1.matrix.clone(),
-        results.map(([polygon, matrix]) => {
-            const shape = new Shape(
-                polygon.regions[polygon.regions.length - 1].map((position) => new Vector2(...position))
-            )
-            shape.holes = polygon.regions
-                .slice(0, -1)
-                .map((region) => new Path().setFromPoints(region.map((p) => new Vector2(...p))))
-            //console.log(shape.holes.length)
-            return new FacePrimitive(matrix.clone().premultiply(helperMatrix), shape)
-        })
+        results
+            .map(([segment, matrix]) => {
+                const geojson = PolyBool.polygonToGeoJSON(PolyBool.polygon(segment))
+                const polygons = geojson.type === "MultiPolygon" ? geojson.coordinates : [geojson.coordinates]
+                return polygons.map((regions: Array<Array<[number, number]>>) => {
+                    const shape = new Shape(regions[0].map((position) => new Vector2(...position)))
+                    shape.holes = regions
+                        .slice(1)
+                        .map((region) => new Path().setFromPoints(region.map((point) => new Vector2(...point))))
+                    return new FacePrimitive(matrix.clone().premultiply(helperMatrix), shape)
+                })
+            })
+            .reduce((v1, v2) => v1.concat(v2), [])
     )
 }
 

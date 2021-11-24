@@ -10,9 +10,8 @@ export function boolean3d(operation: "union" | "intersect" | "subtract", p1: Pri
     if (p1Geometry == null || p2Geometry == null) {
         throw `unable to execute 3d "${operation}" because of missing geometry`
     }
-    helperMatrix.copy(p1.matrix).invert()
     const ownCSG = CSG.fromGeometry(p1Geometry)
     const foreignCSG = CSG.fromGeometry(p2Geometry)
     const resultCSG = ownCSG[operation](foreignCSG)
-    return CombinedPrimitive.fromGeometry(p1.matrix.clone(), resultCSG.toGeometry(helperMatrix))
+    return CombinedPrimitive.fromGeometry(p1.matrix.clone(), resultCSG.toGeometry(p1.matrix))
 }
