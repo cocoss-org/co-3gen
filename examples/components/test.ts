@@ -10,6 +10,8 @@ import {
     boolean3d,
     makeScaleMatrix,
     boolean2d,
+    PointPrimitive,
+    connectAll,
 } from "co-3gen"
 import { BoxBufferGeometry, Matrix4, Plane, Shape, Vector2 } from "three"
 
@@ -33,12 +35,12 @@ let previous = new FacePrimitive(
 
 const results: Array<Primitive> = []
 
-for (let i = 0; i < 10; i++) {
+for (let i = 0; i < 100; i++) {
     const current = previous
         .clone()
-        .applyMatrix(makeTranslationMatrix(0, 1, 0))
-        .applyMatrix(makeRotationMatrix(0, 0.2, 0))
-        .applyMatrix(makeScaleMatrix(0.9, 0.9, 0.9))
+        .applyMatrix(makeTranslationMatrix(0, 0.1, 0))
+        .applyMatrix(makeRotationMatrix(0, (2.1 * Math.PI) / 4, 0))
+        .applyMatrix(makeScaleMatrix(0.99, 0.99, 0.99))
     results.push(connect(previous, current))
     previous = current
 }
@@ -74,4 +76,16 @@ export const test3 = new CombinedPrimitive(new Matrix4(), [
     connect(bottom, top),
     top,
     bottom.applyMatrix(makeScaleMatrix(1, -1, 1)),
-])//.components(ComponentType.Line)
+]) //.components(ComponentType.Line)
+
+const o = new FacePrimitive(
+    new Matrix4(),
+    new Shape([new Vector2(-1, 1), new Vector2(1, 1), new Vector2(1, -1), new Vector2(-1, -1)])
+)
+
+const j = new PointPrimitive(makeTranslationMatrix(0, 1, 0, new Matrix4()))
+
+export const test4 = new CombinedPrimitive(new Matrix4(), [
+    connect(o, j, connectAll),
+    o.applyMatrix(makeScaleMatrix(-1, 1, 1)),
+])

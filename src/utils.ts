@@ -1,5 +1,9 @@
 import { BufferAttribute, BufferGeometry, InterleavedBufferAttribute, Shape, Triangle, Vector3 } from "three"
 
+export function filterNull<T>(val: T | null | undefined): val is T {
+    return val != null
+}
+
 export function getTrianglesFromGeometry(bufferGeometry: BufferGeometry): Array<Triangle> {
     const index = bufferGeometry.getIndex()
     const position = bufferGeometry.getAttribute("position")

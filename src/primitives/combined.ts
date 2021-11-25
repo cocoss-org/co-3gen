@@ -1,7 +1,7 @@
 import { Matrix4, Object3D, BufferGeometry, Vector3, Plane } from "three"
 import { FacePrimitive, Primitive, setupObject3D } from "."
 import { mergeBufferGeometries, mergeVertices } from "three/examples/jsm/utils/BufferGeometryUtils"
-import { getTrianglesFromGeometry } from ".."
+import { filterNull, getTrianglesFromGeometry } from ".."
 import { boolean2d } from "../operations/boolean2d"
 
 const helperPlane = new Plane()
@@ -99,8 +99,4 @@ export class CombinedPrimitive extends Primitive {
             )
             .reduce((v1, v2) => v1.concat(v2), [])
     }
-}
-
-function filterNull<T>(val: T | null | undefined): val is T {
-    return val != null
 }

@@ -17,13 +17,6 @@ export function setupObject3D(object: Object3D, matrix: Matrix4): Object3D {
     return object
 }
 
-export type PrimitiveConnectSelect = (
-    primitive: Primitive,
-    primitiveIndex: number,
-    option: Primitive,
-    optionIndex: number
-) => boolean
-
 export const ComponentType = {
     Face: 0b100,
     Line: 0b010,
