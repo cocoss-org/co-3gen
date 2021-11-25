@@ -12,6 +12,7 @@ import {
     boolean2d,
     PointPrimitive,
     connectAll,
+    sample2d,
 } from "co-3gen"
 import { BoxBufferGeometry, Matrix4, Plane, Shape, Vector2 } from "three"
 
@@ -85,7 +86,11 @@ const o = new FacePrimitive(
 
 const j = new PointPrimitive(makeTranslationMatrix(0, 1, 0, new Matrix4()))
 
-export const test4 = new CombinedPrimitive(new Matrix4(), [
-    connect(o, j, connectAll),
-    o.applyMatrix(makeScaleMatrix(-1, 1, 1)),
-])
+const f = new CombinedPrimitive(new Matrix4(), [connect(o, j, connectAll), o.applyMatrix(makeScaleMatrix(-1, 1, 1))])
+
+const p = new Array(1000).fill(null).map(() => {
+    const r = sample2d(f)
+    return connect(r, r.clone().applyMatrix(makeTranslationMatrix(0, 0.3, 0)))
+})
+
+export const test4 = new CombinedPrimitive(new Matrix4(), p)
