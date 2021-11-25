@@ -31,7 +31,7 @@ export class CombinedPrimitive extends Primitive {
                     triangle.c,
                 ])
             }) as [Primitive])
-        )
+        ).setMatrix(matrix)
     }
 
     getPoint(index: number, target: Vector3): void {

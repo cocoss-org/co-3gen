@@ -64,13 +64,17 @@ export function boolean2d(
             .map(([segment, matrix]) => {
                 const geojson = PolyBool.polygonToGeoJSON(PolyBool.polygon(segment))
                 const polygons = geojson.type === "MultiPolygon" ? geojson.coordinates : [geojson.coordinates]
-                return polygons.map((regions: Array<Array<[number, number]>>) => {
-                    const shape = new Shape(regions[0].map((position) => new Vector2(...position)))
-                    shape.holes = regions
-                        .slice(1)
-                        .map((region) => new Path().setFromPoints(region.map((point) => new Vector2(...point))))
-                    return new FacePrimitive(matrix.clone().premultiply(helperMatrix), shape)
-                })
+                return polygons
+                    .filter((regions: Array<Array<[number, number]>>) => regions.length > 0)
+                    .map((regions: Array<Array<[number, number]>>) => {
+                        const shape = new Shape(regions[0].map((position) => new Vector2(...position)).reverse())
+                        shape.holes = regions
+                            .slice(1)
+                            .map((region) =>
+                                new Path().setFromPoints(region.map((point) => new Vector2(...point)).reverse())
+                            )
+                        return new FacePrimitive(matrix.clone().premultiply(helperMatrix), shape)
+                    })
             })
             .reduce((v1, v2) => v1.concat(v2), [])
     )
