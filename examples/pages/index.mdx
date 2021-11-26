@@ -1,0 +1,28 @@
+import Showcase from "../components/showcase"
+import { LinePrimitive, PointPrimitive, FacePrimitive, ComponentType } from "co-3gen"
+import { Matrix4, Shape, Vector2 } from "three"
+import { test0, test1, test2, test3, test4 } from "../components/test"
+
+# 3D Operator Examples
+
+a simple Face-Primitive / a building lot
+
+<Showcase primitive={test0} />
+
+advanced structure using `connect` & `transform` operator
+
+<Showcase primitive={test1} />
+
+multiple `boolean3d` operators  
+*The resulting geometry is still 100% clean*
+
+<Showcase primitive={test2} />
+
+`boolean2d` & `connect` operator
+
+<Showcase primitive={test3} />
+
+`sample2d` & `connect` operator  
+*the normal of the face is preserved*
+
+<Showcase primitive={test4} />

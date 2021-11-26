@@ -16,6 +16,11 @@ import {
 } from "co-3gen"
 import { BoxBufferGeometry, Matrix4, Plane, Shape, Vector2 } from "three"
 
+export const test0 = new FacePrimitive(
+    new Matrix4(),
+    new Shape([new Vector2(-1, 1), new Vector2(1, 1), new Vector2(2, -1), new Vector2(0, 0)])
+) //.components(ComponentType.Line)
+
 const geometry = new BoxBufferGeometry()
 
 const triangles = getTrianglesFromGeometry(geometry)
@@ -46,7 +51,7 @@ for (let i = 0; i < 100; i++) {
     previous = current
 }
 
-export const faces = new CombinedPrimitive(new Matrix4(), results) //.components(ComponentType.Line)
+export const test1 = new CombinedPrimitive(new Matrix4(), results) //.components(ComponentType.Line)
 
 const x = CombinedPrimitive.fromGeometry(new Matrix4(), new BoxBufferGeometry())
 //
@@ -58,7 +63,7 @@ const k = boolean3d("subtract", x, y)
 
 const h = boolean3d("union", k, k.clone().applyMatrix(makeTranslationMatrix(1, 0, 0)))
 
-export const test2 = boolean3d("union", h, h.clone().applyMatrix(makeTranslationMatrix(0, 0, 1))) //.components(ComponentType.Line)
+export const test2 = boolean3d("union", h, h.clone().applyMatrix(makeTranslationMatrix(0, 0, 1))).components(ComponentType.Line)
 
 const outer = new FacePrimitive(
     new Matrix4(),
@@ -74,6 +79,7 @@ const bottom = boolean2d("difference", outer, inner)
 const top = bottom.clone().applyMatrix(makeTranslationMatrix(0, 1, 0))
 
 export const test3 = new CombinedPrimitive(new Matrix4(), [
+    //bottom,
     connect(bottom, top),
     top,
     bottom.applyMatrix(makeScaleMatrix(1, -1, 1)),
@@ -86,11 +92,17 @@ const o = new FacePrimitive(
 
 const j = new PointPrimitive(makeTranslationMatrix(0, 1, 0, new Matrix4()))
 
-const f = new CombinedPrimitive(new Matrix4(), [connect(o, j, connectAll), o.applyMatrix(makeScaleMatrix(-1, 1, 1))])
+const f = new CombinedPrimitive(new Matrix4(), [
+    connect(o, j, connectAll),
+    o.clone().applyMatrix(makeScaleMatrix(-1, 1, 1)),
+])
 
-const p = new Array(1000).fill(null).map(() => {
-    const r = sample2d(f)
-    return connect(r, r.clone().applyMatrix(makeTranslationMatrix(0, 0.3, 0)))
-})
+const p = new CombinedPrimitive(
+    new Matrix4(),
+    new Array(1000).fill(null).map(() => {
+        const r = sample2d(f)
+        return connect(r, r.clone().applyMatrix(makeTranslationMatrix(0, 0.3, 0)))
+    })
+)
 
-export const test4 = new CombinedPrimitive(new Matrix4(), p)
+export const test4 = p
