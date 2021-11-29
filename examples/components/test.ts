@@ -13,8 +13,10 @@ import {
     PointPrimitive,
     connectAll,
     sample2d,
+    expand2d,
+    LinePrimitive,
 } from "co-3gen"
-import { BoxBufferGeometry, Matrix4, Plane, Shape, Vector2 } from "three"
+import { BoxBufferGeometry, Matrix4, Plane, Shape, Vector2, Vector3 } from "three"
 
 export const test0 = new FacePrimitive(
     new Matrix4(),
@@ -63,7 +65,9 @@ const k = boolean3d("subtract", x, y)
 
 const h = boolean3d("union", k, k.clone().applyMatrix(makeTranslationMatrix(1, 0, 0)))
 
-export const test2 = boolean3d("union", h, h.clone().applyMatrix(makeTranslationMatrix(0, 0, 1))).components(ComponentType.Line)
+export const test2 = boolean3d("union", h, h.clone().applyMatrix(makeTranslationMatrix(0, 0, 1))).components(
+    ComponentType.Line
+)
 
 const outer = new FacePrimitive(
     new Matrix4(),
@@ -106,3 +110,18 @@ const p = new CombinedPrimitive(
 )
 
 export const test4 = p
+
+const r = new FacePrimitive(
+    new Matrix4(),
+    new Shape([new Vector2(-1, 1), new Vector2(1, 1), new Vector2(1, -1), new Vector2(-1, -1)])
+)
+
+r.applyMatrix(makeRotationMatrix(0, Math.PI / 4, 0))
+
+const u = new CombinedPrimitive(new Matrix4(), [
+    LinePrimitive.fromPoints(new Matrix4(), new Vector3(0, 0, 0), new Vector3(1, 0, 1)),
+    LinePrimitive.fromPoints(new Matrix4(), new Vector3(1, 0, 1), new Vector3(1, 0, 2)),
+    LinePrimitive.fromPoints(new Matrix4(), new Vector3(1, 0, 2), new Vector3(2, 0, 2)),
+])
+
+export const test5 = expand2d(u, 0.5).components(ComponentType.Line)

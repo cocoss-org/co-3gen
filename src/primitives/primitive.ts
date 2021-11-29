@@ -98,6 +98,10 @@ export abstract class Primitive {
     //abstract applyMatrixToGeometry(matrix: Matrix4): void;
 
     abstract get pointAmount(): number
+
+    /**
+     * @param target global point of the primitive
+     */
     abstract getPoint(index: number, target: Vector3): void
 
     protected abstract componentArray(type: number): Array<Primitive>
