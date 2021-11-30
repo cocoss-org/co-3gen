@@ -15,6 +15,7 @@ import {
     sample2d,
     LinePrimitive,
     setback,
+    outline
 } from "co-3gen"
 import { BoxBufferGeometry, Matrix4, Plane, Shape, Vector2, Vector3 } from "three"
 
@@ -119,10 +120,17 @@ const r = new FacePrimitive(
 //r.applyMatrix(makeRotationMatrix(0, Math.PI / 4, 0))
 
 const u = new CombinedPrimitive(new Matrix4(), [
-    LinePrimitive.fromPoints(new Matrix4(), new Vector3(0, 1, 0), new Vector3(0, 1, 2)),
-    LinePrimitive.fromPoints(new Matrix4(), new Vector3(0, 1, 2), new Vector3(2, 0, 2)),
+    LinePrimitive.fromPoints(new Matrix4(), new Vector3(0, 1, 0), new Vector3(0, 0, 2)),
+    LinePrimitive.fromPoints(new Matrix4(), new Vector3(0, 0, 2), new Vector3(2, 0, 2)),
     LinePrimitive.fromPoints(new Matrix4(), new Vector3(2, 0, 2), new Vector3(2, 0, 0)),
     LinePrimitive.fromPoints(new Matrix4(), new Vector3(2, 0, 0), new Vector3(0, 1, 0)),
 ])
 
-export const test5 = setback(f, 0.2).components(ComponentType.Line)
+/**
+ * new CombinedPrimitive(new Matrix4(), [
+    setback(u, -0.5), //.components(ComponentType.Line),
+    setback(u, 0.5), //.components(ComponentType.Line),
+])
+ */
+
+export const test5 = outline(u, 0.5)//.components(ComponentType.Line)

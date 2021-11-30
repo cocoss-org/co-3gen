@@ -1,9 +1,9 @@
 import { Euler, Line, Matrix4, Quaternion, Vector3 } from "three"
-import { CombinedPrimitive, ComponentType, connect, LinePrimitive, Primitive } from ".."
+import { CombinedPrimitive, ComponentType, connect, connectAll, LinePrimitive, Primitive } from ".."
 
 const DEFAULT_QUATERNION = new Quaternion().setFromEuler(new Euler(0, 0, 0))
 
-//todo: by per edge
+//TODO: by per edge
 export function setback(primitive: Primitive, by: number) {
     const lines = primitive["componentArray"](ComponentType.Line)
     const polygons = groupInPolygons(lines)
@@ -81,21 +81,24 @@ function setbackPolygon(polygon: Array<[Primitive, Vector3]>, by: number): Array
         outerPoints.push(outerPoint.clone())
     }
 
-    if (innerDistance > outerDistance) {
+    if (innerDistance > outerDistance == by >= 0) {
         innerPoints = outerPoints
     }
 
     return innerPoints.map((_, i) => {
-        //TODO: invert when by < 0
-        currentHelper.copy(innerPoints[i])
-        nextHelper.copy(innerPoints[(i + 1) % innerPoints.length])
-        return connect(polygon[i][0], LinePrimitive.fromPoints(new Matrix4(), currentHelper, nextHelper))
+        return connect(
+            polygon[i][0],
+            LinePrimitive.fromPoints(new Matrix4(), innerPoints[i], innerPoints[(i + 1) % innerPoints.length]),
+            connectAll,
+            by < 0
+        )
     })
 }
 
 const vectorHelper = new Vector3()
 
-function groupInPolygons(lines: Array<Primitive>): Array<Array<[Primitive, Vector3]>> {
+export function groupInPolygons(lines: Array<Primitive>): Array<Array<[Primitive, Vector3]>> {
+    //TODO: this does not work correctly
     const result: Array<Array<[Primitive, Vector3]>> = []
     let ends: Array<Vector3>
     let i = 0

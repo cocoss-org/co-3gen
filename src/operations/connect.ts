@@ -10,13 +10,19 @@ export type PrimitiveConnectSelect = (
 const matrixHelper = new Matrix4()
 const planeHelper = new Plane()
 
-function connectPoint(matrix: Matrix4, points: [Vector3, Vector3]): Primitive {
+function connectPoint(matrix: Matrix4, points: [Vector3, Vector3], invertFace: boolean): Primitive {
+    if(invertFace) {
+        points.reverse()
+    }
     matrixHelper.copy(matrix).invert()
     points.forEach((p) => p.applyMatrix4(matrixHelper))
     return LinePrimitive.fromPoints(matrix.clone(), ...points)
 }
 
-function connectLine(matrix: Matrix4, points: [Vector3, Vector3, Vector3]): Primitive {
+function connectLine(matrix: Matrix4, points: [Vector3, Vector3, Vector3], invertFace: boolean): Primitive {
+    if(invertFace) {
+        points.reverse()
+    }
     matrixHelper.copy(matrix).invert()
     points.forEach((p) => p.applyMatrix4(matrixHelper))
     planeHelper.setFromCoplanarPoints(...points)
@@ -87,7 +93,7 @@ export const connectAll: PrimitiveConnectSelect = (primitives, options) => {
 
 const vectors = new Array(4).fill(null).map(() => new Vector3())
 
-export function connect(p1: Primitive, p2: Primitive, select: PrimitiveConnectSelect = connectNearest): Primitive {
+export function connect(p1: Primitive, p2: Primitive, select: PrimitiveConnectSelect = connectNearest, invertFace: boolean = false): Primitive {
     const foreignPrimitives = p2["componentArray"](ComponentType.Line | ComponentType.Point)
     const ownPrimitives = p1["componentArray"](ComponentType.Line | ComponentType.Point)
 
@@ -96,14 +102,14 @@ export function connect(p1: Primitive, p2: Primitive, select: PrimitiveConnectSe
         const pointAmountSum = foreignPrimitive.pointAmount + ownPointAmount
         const getPoint = _getPoint.bind(null, ownPointAmount, ownPrimitive, foreignPrimitive)
         if (pointAmountSum === 2) {
-            return connectPoint(ownPrimitive.matrix, [getPoint(0), getPoint(1)])
+            return connectPoint(ownPrimitive.matrix, [getPoint(0), getPoint(1)], invertFace)
         } else if (pointAmountSum === 3) {
-            return connectLine(ownPrimitive.matrix, [getPoint(0), getPoint(1), getPoint(2)])
+            return connectLine(ownPrimitive.matrix, [getPoint(0), getPoint(1), getPoint(2)], invertFace)
         } else if (pointAmountSum === 4) {
             return boolean2d(
                 "union",
-                connectLine(ownPrimitive.matrix, [getPoint(0), getPoint(3), getPoint(2)]),
-                connectLine(ownPrimitive.matrix, [getPoint(0), getPoint(1), getPoint(3)])
+                connectLine(ownPrimitive.matrix, [getPoint(0), getPoint(3), getPoint(2)], invertFace),
+                connectLine(ownPrimitive.matrix, [getPoint(0), getPoint(1), getPoint(3)], invertFace)
             )
         } else {
             throw `can connect ${pointAmountSum} points`
