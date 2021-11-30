@@ -1,6 +1,6 @@
 import { Euler, Matrix4, Quaternion, Vector3 } from "three"
 import { connect, connectAll } from "."
-import { CombinedPrimitive, ComponentType, LinePrimitive, Primitive } from ".."
+import { CombinedPrimitive, ComponentType, filterNull, LinePrimitive, Primitive } from ".."
 
 function createLineLookup(
     linePrimitives: Array<Primitive>
@@ -20,7 +20,6 @@ function createLineLookup(
         const entry = lookup.find(([v]) => v.distanceTo(v1) < 0.001)?.[1] ?? []
         for (const v of entry) {
             if (v.distanceTo(exclude) > 0.001) {
-                //TODO: crossings
                 target.copy(v)
                 return true
             }
@@ -40,46 +39,52 @@ function createLineLookup(
     return get
 }
 
-const point2Helper = new Vector3()
 const point3Helper = new Vector3()
 
-const quaternionHelper = new Quaternion()
 const DEFAULT_QUATERNION = new Quaternion().setFromEuler(new Euler(0, 0, 0))
 const _90_DEG_QUATERNION = new Quaternion().setFromEuler(new Euler(0, -Math.PI / 2, 0))
 
-function getPoint(
-    line: Primitive,
+function getPointsAndQuaternion(
     getNextPoint: (v1: Vector3, exclude: Vector3, target: Vector3) => boolean,
-    prev: boolean,
-    by: number,
-    target: Vector3
-): void {
-    line.getPoint(prev ? 1 : 0, target)
-    line.getPoint(prev ? 0 : 1, point2Helper)
+    newPointTarget: Vector3,
+    cornerTarget: Vector3,
+    quaternionTarget: Quaternion
+): boolean {
+    const hasNext = getNextPoint(cornerTarget, newPointTarget, point3Helper)
 
-    const hasNext = getNextPoint(point2Helper, target, point3Helper)
-
-    target.sub(point2Helper)
-
-    if (hasNext) {
-        point3Helper.sub(point2Helper)
-        target.normalize()
-        point3Helper.normalize()
-        quaternionHelper.setFromUnitVectors(target, point3Helper)
-        quaternionHelper.slerp(DEFAULT_QUATERNION, 0.5)
-    } else {
-        quaternionHelper.copy(_90_DEG_QUATERNION)
+    if (!hasNext) {
+        return false
     }
-    const angle = quaternionHelper.angleTo(DEFAULT_QUATERNION)
-    const distance = by / Math.sin(angle)
 
-    target.applyQuaternion(quaternionHelper)
-    target.multiplyScalar(distance)
-    target.add(point2Helper)
+    newPointTarget.sub(cornerTarget)
+
+    point3Helper.sub(cornerTarget)
+    newPointTarget.normalize()
+    point3Helper.normalize()
+    quaternionTarget.setFromUnitVectors(newPointTarget, point3Helper)
+
+    return true
 }
 
-const lookupVector = new Vector3()
+function calculatePoint(quaternion: Quaternion, newPointTarget: Vector3, corner: Vector3, by: number) {
+    quaternion.slerp(DEFAULT_QUATERNION, 0.5)
+
+    const angle = quaternion.angleTo(DEFAULT_QUATERNION)
+    const distance = by / Math.sin(angle)
+
+    newPointTarget.applyQuaternion(quaternion)
+    newPointTarget.multiplyScalar(distance)
+    newPointTarget.add(corner)
+}
+
+const startPoint = new Vector3()
 const endPoint = new Vector3()
+
+const startQuaternion = new Quaternion()
+const endQuaternion = new Quaternion()
+
+const point1Helper = new Vector3()
+const point2Helper = new Vector3()
 
 export function expand2d(primitive: Primitive, by: number): Primitive {
     const lines = primitive["componentArray"](ComponentType.Line)
@@ -93,9 +98,36 @@ export function expand2d(primitive: Primitive, by: number): Primitive {
             .filter((line) => line.pointAmount === 2)
             .map((line) => {
                 //TODO invert when by < 0
-                getPoint(line, getNextPoint, true, by, lookupVector)
-                getPoint(line, getNextPoint, false, by, endPoint)
-                return connect(line, LinePrimitive.fromPoints(new Matrix4(), lookupVector, endPoint), connectAll)
+                line.getPoint(0, point2Helper)
+                line.getPoint(1, point1Helper)
+
+                startPoint.copy(point1Helper)
+                endPoint.copy(point2Helper)
+
+                const hasPrev = getPointsAndQuaternion(getNextPoint, startPoint, point2Helper, startQuaternion)
+                const hasNext = getPointsAndQuaternion(getNextPoint, endPoint, point1Helper, endQuaternion)
+
+                if (!hasPrev && !hasNext) {
+                    return undefined
+                }
+
+                if (!hasPrev) {
+                    //TODO
+                }
+
+                if (!hasNext) {
+                    //TODO
+                }
+
+                if (startPoint.dot(endPoint) < 0) {
+                    endQuaternion.conjugate()
+                }
+
+                calculatePoint(startQuaternion, startPoint, point2Helper, by)
+                calculatePoint(endQuaternion, endPoint, point1Helper, by)
+
+                return connect(line, LinePrimitive.fromPoints(new Matrix4(), startPoint, endPoint), connectAll)
             })
+            .filter(filterNull)
     )
 }

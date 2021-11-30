@@ -13,8 +13,8 @@ import {
     PointPrimitive,
     connectAll,
     sample2d,
-    expand2d,
     LinePrimitive,
+    setback,
 } from "co-3gen"
 import { BoxBufferGeometry, Matrix4, Plane, Shape, Vector2, Vector3 } from "three"
 
@@ -113,15 +113,16 @@ export const test4 = p
 
 const r = new FacePrimitive(
     new Matrix4(),
-    new Shape([new Vector2(-1, 1), new Vector2(1, 1), new Vector2(1, -1), new Vector2(-1, -1)])
+    new Shape([new Vector2(-2, 2), new Vector2(2, 2), new Vector2(10, -2), new Vector2(-0.5, -0.5)])
 )
 
-r.applyMatrix(makeRotationMatrix(0, Math.PI / 4, 0))
+//r.applyMatrix(makeRotationMatrix(0, Math.PI / 4, 0))
 
 const u = new CombinedPrimitive(new Matrix4(), [
-    LinePrimitive.fromPoints(new Matrix4(), new Vector3(0, 0, 0), new Vector3(1, 0, 1)),
-    LinePrimitive.fromPoints(new Matrix4(), new Vector3(1, 0, 1), new Vector3(1, 0, 2)),
-    LinePrimitive.fromPoints(new Matrix4(), new Vector3(1, 0, 2), new Vector3(2, 0, 2)),
+    LinePrimitive.fromPoints(new Matrix4(), new Vector3(0, 1, 0), new Vector3(0, 1, 2)),
+    LinePrimitive.fromPoints(new Matrix4(), new Vector3(0, 1, 2), new Vector3(2, 0, 2)),
+    LinePrimitive.fromPoints(new Matrix4(), new Vector3(2, 0, 2), new Vector3(2, 0, 0)),
+    LinePrimitive.fromPoints(new Matrix4(), new Vector3(2, 0, 0), new Vector3(0, 1, 0)),
 ])
 
-export const test5 = expand2d(u, 0.5).components(ComponentType.Line)
+export const test5 = setback(f, 0.2).components(ComponentType.Line)
