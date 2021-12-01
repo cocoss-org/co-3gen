@@ -1,87 +1,69 @@
 import { Euler, Matrix4, Quaternion, Vector3 } from "three"
-import { connect, connectAll, groupInPolygons } from "."
-import { Primitive, ComponentType, CombinedPrimitive, LinePrimitive } from ".."
-
-const DEFAULT_QUATERNION = new Quaternion().setFromEuler(new Euler(0, 0, 0))
+import { Primitive, ComponentType, CombinedPrimitive } from ".."
 
 //TODO: by per edge
-export function outline(primitive: Primitive, by: number, invertFace: boolean = false) {
+/*export function outline(primitive: Primitive, outlineRotations: Array<number>, by: number) {
     const lines = primitive["componentArray"](ComponentType.Line)
-    const polygons = groupInPolygons(lines)
+    const corners = computeCorners(lines)
     return new CombinedPrimitive(
         new Matrix4(),
-        polygons.reduce<Array<Primitive>>((prev, polygon) => prev.concat(outlinePolygon(polygon, by, invertFace)), [])
+        lines.reduce<Array<Primitive>>((prev, polygon) => prev.concat(outlinePolygon(polygon, by)), [])
     )
 }
 
-const prevHelper = new Vector3()
-const currentHelper = new Vector3()
-const nextHelper = new Vector3()
+const eulerHelper = new Euler()
+const matrixHelper = new Matrix4()
+const transformationMatrixHelper = new Matrix4()
 
-const quaternionHelper = new Quaternion()
+function outlineLine(
+    line: Primitive,
+    corners: Array<[Vector3, Array<Vector3>]>,
+    outlineRotations: Array<number>,
+    by: number
+): Array<Primitive> {
+    return outlineRotations.map((rotation) => {
+        eulerHelper.set(rotation, 0, 0)
 
-const pointHelper1 = new Vector3()
-const pointHelper2 = new Vector3()
+        matrixHelper.identity()
+        matrixHelper.makeTranslation(0, 0, by)
 
-const lineNormalHelper = new Vector3()
-const poin1LineNormalHelper = new Vector3()
+        transformationMatrixHelper.makeRotationFromEuler(eulerHelper)
+        matrixHelper.multiply(transformationMatrixHelper)
+        
+        matrixHelper.multiply(line.matrix)
 
-const prevInnerPoint = new Vector3()
-const prevOuterPoint = new Vector3()
-
-function outlinePolygon(polygon: Array<[Primitive, Vector3]>, by: number, invertFace: boolean): Array<Primitive> {
-    const side1Points: Array<Vector3> = []
-    const side2Points: Array<Vector3> = []
-
-    for (let i = 0; i < polygon.length; i++) {
-        prevHelper.copy(polygon[(i - 1 + polygon.length) % polygon.length][1])
-        currentHelper.copy(polygon[i][1])
-        nextHelper.copy(polygon[(i + 1) % polygon.length][1])
-        prevHelper.sub(currentHelper)
-        nextHelper.sub(currentHelper)
-
-        prevHelper.normalize()
-        nextHelper.normalize()
-
-        lineNormalHelper.copy(prevHelper)
-
-        quaternionHelper.setFromUnitVectors(prevHelper, nextHelper)
-        quaternionHelper.slerp(DEFAULT_QUATERNION, 0.5)
-
-        prevHelper.applyQuaternion(quaternionHelper)
-
-        const angle = quaternionHelper.angleTo(DEFAULT_QUATERNION)
-        const distance = by / 2 / Math.sin(angle)
-
-        pointHelper1.copy(prevHelper)
-        pointHelper2.copy(prevHelper)
-
-        pointHelper1.multiplyScalar(distance)
-        pointHelper1.add(currentHelper)
-
-        pointHelper2.multiplyScalar(-distance)
-        pointHelper2.add(currentHelper)
-
-        poin1LineNormalHelper.copy(prevInnerPoint).sub(pointHelper1).normalize()
-
-        const prevHelperInside = Math.abs(lineNormalHelper.dot(poin1LineNormalHelper) - 1) < 0.0001
-
-        const innerPoint: Vector3 = prevHelperInside ? pointHelper1 : pointHelper2
-        const outerPoint: Vector3 = prevHelperInside ? pointHelper2 : pointHelper1
-
-        prevInnerPoint.copy(innerPoint)
-        prevOuterPoint.copy(outerPoint)
-
-        side1Points.push(innerPoint.clone())
-        side2Points.push(outerPoint.clone())
-    }
-
-    return side1Points.map((_, i) => {
-        return connect(
-            LinePrimitive.fromPoints(new Matrix4(), side1Points[i], side1Points[(i + 1) % side1Points.length]),
-            LinePrimitive.fromPoints(new Matrix4(), side2Points[i], side2Points[(i + 1) % side2Points.length]),
-            connectAll,
-            invertFace
-        )
+        return null as any
     })
 }
+
+const vectorHelper1 = new Vector3()
+const vectorHelper2 = new Vector3()
+
+const directionHelper = new Vector3()
+
+export function computeCorners(lines: Array<Primitive>): Array<[Vector3, Array<Vector3>]> {
+    const result: Array<[Vector3, Array<Vector3>]> = []
+
+    function insert(point1: Vector3, point2: Vector3) {
+        directionHelper.copy(point2).sub(point1)
+        directionHelper.normalize()
+
+        let entry = result.find(([v]) => v.distanceTo(point1) < 0.001)
+
+        if (entry == null) {
+            entry = [point1.clone(), []]
+            result.push(entry)
+        }
+
+        entry.push(directionHelper.clone())
+    }
+
+    lines.forEach((line) => {
+        line.getPoint(0, vectorHelper1)
+        line.getPoint(1, vectorHelper2)
+        insert(vectorHelper1, vectorHelper2)
+        insert(vectorHelper2, vectorHelper1)
+    })
+
+    return result
+}*/

@@ -31,6 +31,7 @@ import PolyBool from "polybooljs"
 const helperVector = new Vector3()
 const helper2Vector = new Vector3()
 const quaternionHelper = new Quaternion()
+const matrixHelper = new Matrix4()
 
 /**
  * face in x, z axis
@@ -66,17 +67,26 @@ export class FacePrimitive extends Primitive {
     }
 
     static fromPointsOnPlane(matrix: Matrix4, plane: Plane, points: Array<Vector3>): Primitive {
-        quaternionHelper.setFromUnitVectors(plane.normal, YAXIS)
+        quaternionHelper.setFromUnitVectors(YAXIS, plane.normal)
+        matrix.multiply(makeQuanterionMatrix(quaternionHelper)).multiply(makeTranslationMatrix(0, -plane.constant, 0))
+        quaternionHelper.invert()
+        //we don't need to invert the matrix cause the translation is irrelevant because we are only interested in the x and z values
         const shape = new Shape(
             points.map((point) => {
                 const p = point.clone().applyQuaternion(quaternionHelper)
                 return new Vector2(p.x, p.z)
             })
         )
+        return new FacePrimitive(matrix, shape)
+    }
+
+    static fromPointsAndPlane(matrix: Matrix4, plane: Plane, points: Array<Vector2>): Primitive {
+        quaternionHelper.setFromUnitVectors(YAXIS, plane.normal)
+        const shape = new Shape(points.map((point) => point.clone()))
         return new FacePrimitive(
             matrix
-                .multiply(makeQuanterionMatrix(quaternionHelper.invert()))
-                .multiply(makeTranslationMatrix(0, -plane.constant, 0)),
+                .multiply(makeQuanterionMatrix(quaternionHelper))
+                .multiply(makeTranslationMatrix(0, plane.constant, 0)),
             shape
         )
     }

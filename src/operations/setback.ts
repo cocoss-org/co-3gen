@@ -5,8 +5,7 @@ const DEFAULT_QUATERNION = new Quaternion().setFromEuler(new Euler(0, 0, 0))
 
 //TODO: by per edge
 export function setback(primitive: Primitive, by: number) {
-    const lines = primitive["componentArray"](ComponentType.Line)
-    const polygons = groupInPolygons(lines)
+    const polygons = groupInPolygons(primitive["componentArray"](ComponentType.Line))
     return new CombinedPrimitive(
         new Matrix4(),
         polygons.reduce<Array<Primitive>>((prev, polygon) => prev.concat(setbackPolygon(polygon, by)), [])
@@ -28,7 +27,7 @@ const poin1LineNormalHelper = new Vector3()
 const prevInnerPoint = new Vector3()
 const prevOuterPoint = new Vector3()
 
-function setbackPolygon(polygon: Array<[Primitive, Vector3]>, by: number): Array<Primitive> {
+function setbackPolygon(polygon: Array<Primitive>, by: number): Array<Primitive> {
     let innerPoints: Array<Vector3> = []
     const outerPoints: Array<Vector3> = []
 
@@ -36,9 +35,9 @@ function setbackPolygon(polygon: Array<[Primitive, Vector3]>, by: number): Array
     let outerDistance = 0
 
     for (let i = 0; i < polygon.length; i++) {
-        prevHelper.copy(polygon[(i - 1 + polygon.length) % polygon.length][1])
-        currentHelper.copy(polygon[i][1])
-        nextHelper.copy(polygon[(i + 1) % polygon.length][1])
+        polygon[i].getPoint(0, prevHelper)
+        polygon[i].getPoint(1, currentHelper)
+        polygon[(i + 1) % polygon.length].getPoint(1, nextHelper)
         prevHelper.sub(currentHelper)
         nextHelper.sub(currentHelper)
 
@@ -87,51 +86,59 @@ function setbackPolygon(polygon: Array<[Primitive, Vector3]>, by: number): Array
 
     return innerPoints.map((_, i) => {
         return connect(
-            polygon[i][0],
-            LinePrimitive.fromPoints(new Matrix4(), innerPoints[i], innerPoints[(i + 1) % innerPoints.length]),
+            polygon[i],
+            LinePrimitive.fromPoints(
+                new Matrix4(),
+                innerPoints[(i - 1 + innerPoints.length) % innerPoints.length],
+                innerPoints[i]
+            ),
             connectAll,
             by < 0
         )
     })
 }
 
-const vectorHelper = new Vector3()
-
-export function groupInPolygons(lines: Array<Primitive>): Array<Array<[Primitive, Vector3]>> {
-    //TODO: this does not work correctly
-    const result: Array<Array<[Primitive, Vector3]>> = []
-    let ends: Array<Vector3>
+export function groupInPolygons(lines: Array<Primitive>): Array<Array<Primitive>> {
+    const linesCopy = [...lines]
+    const result: Array<Array<Primitive>> = []
     let i = 0
-    lines.forEach((line) => {
+    while (linesCopy.length > 0) {
         if (result[i] == null) {
-            result[i] = []
-            ends = []
+            result[i] = [linesCopy[0]]
+            linesCopy.splice(0, 1)
         }
 
-        line.getPoint(0, vectorHelper)
-        result[i].push([line, vectorHelper.clone()])
+        const nextLineIndex = linesCopy.findIndex((line) => isNextLine(last(result[i]), line))
 
-        line.getPoint(1, vectorHelper)
-        ends.push(vectorHelper.clone())
+        if (nextLineIndex === -1) {
+            result.splice(i, 1)
+            continue
+        }
 
-        if (isClosed(result[i], ends)) {
+        const nextLine = linesCopy[nextLineIndex]
+        linesCopy.splice(nextLineIndex, 1)
+
+        result[i].push(nextLine)
+
+        if (isNextLine(last(result[i]), result[i][0])) {
             i++
         }
-    })
+    }
     if (result[i] != null) {
-        throw `unable to setback unclosed polygons`
+        result.splice(i, 1)
     }
     return result
 }
 
-function isClosed(starts: Array<[Primitive, Vector3]>, ends: Array<Vector3>): boolean {
-    if (ends.length != starts.length) {
-        return false
-    }
-    for (let i = 0; i < ends.length; i++) {
-        if (ends.find((v) => v.distanceTo(starts[i][1]) < 0.001) == null) {
-            return false
-        }
-    }
-    return true
+function last<T>(array: Array<T>): T {
+    return array[array.length - 1]
+}
+
+const vectorHelper1 = new Vector3()
+const vectorHelper2 = new Vector3()
+
+function isNextLine(p1: Primitive, p2: Primitive) {
+    p1.getPoint(1, vectorHelper1)
+    p2.getPoint(0, vectorHelper2)
+    return vectorHelper1.distanceTo(vectorHelper2) < 0.001
 }

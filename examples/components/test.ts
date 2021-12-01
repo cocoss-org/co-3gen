@@ -14,8 +14,10 @@ import {
     connectAll,
     sample2d,
     LinePrimitive,
+    split,
     setback,
-    outline
+    splitAngle,
+    Axis,
 } from "co-3gen"
 import { BoxBufferGeometry, Matrix4, Plane, Shape, Vector2, Vector3 } from "three"
 
@@ -133,4 +135,11 @@ const u = new CombinedPrimitive(new Matrix4(), [
 ])
  */
 
-export const test5 = outline(u, 0.5)//.components(ComponentType.Line)
+const oo = splitAngle(f, 0, Math.PI / 2, new Vector3(0, 0, 0), Axis.Y)
+
+export const test5 = oo
+
+/*new CombinedPrimitive(new Matrix4(), [
+    setback(oo[0], 0.1),
+    setback(oo[1].applyMatrix(makeTranslationMatrix(0, 0.1, 0)), 0.1),
+])*/
