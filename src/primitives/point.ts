@@ -14,7 +14,7 @@ export class PointPrimitive extends Primitive {
         if (index === 0) {
             target.setFromMatrixPosition(this.matrix)
         } else {
-            throw `out of index ${index} when using "getPoint"`
+            throw new Error(`out of index ${index} when using "getPoint"`)
         }
     }
 

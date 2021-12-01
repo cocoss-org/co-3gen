@@ -60,7 +60,7 @@ export class FacePrimitive extends Primitive {
             offset += polygon.length
         }
         if (point == null) {
-            throw `out of index ${index} when using "getPoint"`
+            throw new Error(`out of index ${index} when using "getPoint"`)
         }
         target.set(point.x, 0, point.y)
         target.applyMatrix4(this.matrix)

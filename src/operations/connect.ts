@@ -112,7 +112,7 @@ export function connect(p1: Primitive, p2: Primitive, select: PrimitiveConnectSe
                 connectLine(ownPrimitive.matrix, [getPoint(0), getPoint(1), getPoint(3)], invertFace)
             )
         } else {
-            throw `can connect ${pointAmountSum} points`
+            throw new Error(`can connect ${pointAmountSum} points`)
         }
     })
 

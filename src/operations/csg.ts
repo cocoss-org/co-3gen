@@ -8,7 +8,7 @@
   const g2 = p2.getGeometry(true)?.applyMatrix4(matrixHelper);
 
   if (g1 == null || g2 == null) {
-    throw "can't apply csg invert on primitives with no geometry";
+    throw new Error("can't apply csg invert on primitives with no geometry")
   }
 
   const csg1 = CSG.fromGeometry(g1);
@@ -25,7 +25,7 @@
 export function CSGInverse(primitive: Primitive): Primitive {
   const g = primitive.getGeometry(false);
   if (g == null) {
-    throw "can't apply csg invert on primitive with no geometry";
+    throw new Error("can't apply csg invert on primitive with no geometry")
   }
   return new GeometryPrimitive(
     primitive.matrix.clone(),

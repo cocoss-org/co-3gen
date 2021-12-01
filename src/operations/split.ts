@@ -3,16 +3,42 @@ import { boolean3d, connect, connectByIndex, getBoundingSphere } from "."
 import { CombinedPrimitive, FacePrimitive, makeScaleMatrix, makeTranslationMatrix, Primitive, YAXIS } from ".."
 
 const helperPlane = new Plane()
-helperPlane.constant = 0
 
-export function split(
+const vectorHelper = new Vector3()
+const projectedPoint = new Vector3()
+
+function getDepthAndRadius(
     primitive: Primitive,
-    basePoint: Vector3,
-    baseNormal: Vector3,
     point: Vector3,
     normal: Vector3,
-    radius: number
-) {
+    radius: number | undefined
+): [number, number] {
+    helperPlane.setFromNormalAndCoplanarPoint(normal, point)
+    let resultRadius = radius ?? 0
+    let depth = 0
+    const amount = primitive.pointAmount
+    for (let i = 0; i < amount; i++) {
+        primitive.getPoint(i, vectorHelper)
+        const d = helperPlane.distanceToPoint(vectorHelper)
+        if (d < 0) {
+            helperPlane.projectPoint(vectorHelper, projectedPoint)
+            const r = projectedPoint.distanceTo(point)
+            if (radius == null || r < radius) {
+                resultRadius = Math.max(resultRadius, r)
+                if (d < depth) {
+                    depth = d
+                }
+            }
+        }
+    }
+    return [resultRadius, depth]
+}
+
+function _split(primitive: Primitive, point: Vector3, normal: Vector3, radius: number, depth: number) {
+    if (depth >= 0) {
+        return [primitive, new CombinedPrimitive(new Matrix4(), [])]
+    }
+
     const points = [
         new Vector2(radius, radius),
         new Vector2(radius, -radius),
@@ -20,29 +46,41 @@ export function split(
         new Vector2(-radius, radius),
     ]
 
-    helperPlane.normal.copy(baseNormal)
+    helperPlane.normal.copy(normal)
+
+    helperPlane.constant = 0
     const firstPlane = FacePrimitive.fromPointsAndPlane(
-        makeTranslationMatrix(basePoint.x, basePoint.y, basePoint.z, new Matrix4()),
+        makeTranslationMatrix(point.x, point.y, point.z, new Matrix4()),
         helperPlane,
         points
     )
 
-    helperPlane.normal.copy(normal)
+    helperPlane.constant = depth
     const secondPlane = FacePrimitive.fromPointsAndPlane(
         makeTranslationMatrix(point.x, point.y, point.z, new Matrix4()),
         helperPlane,
         points
     )
 
+    firstPlane.applyMatrix(makeScaleMatrix(-1, 1, 1))
+    secondPlane.applyMatrix(makeScaleMatrix(-1, 1, 1))
+
     const seperator = new CombinedPrimitive(new Matrix4(), [
-        //connect(firstPlane, secondPlane, connectByIndex),
-        firstPlane,//.applyMatrix(makeScaleMatrix(-1, 1, 1)),
+        connect(secondPlane, firstPlane, connectByIndex),
+        firstPlane.applyMatrix(makeScaleMatrix(-1, 1, 1)),
         secondPlane,
     ])
 
-    return seperator
+    //return [primitive, seperator]
 
     return [boolean3d("intersect", primitive, seperator), boolean3d("subtract", primitive, seperator)]
+}
+
+const sphere = new Sphere()
+
+export function split(primitive: Primitive, point: Vector3, normal: Vector3, radius?: number) {
+    const [resultRadius, depth] = getDepthAndRadius(primitive, point, normal, radius)
+    return _split(primitive, point, normal, resultRadius, depth)
 }
 
 export enum Axis {
@@ -51,46 +89,45 @@ export enum Axis {
     Z,
 }
 
-export function splitAxis(primitive: Primitive, by: number, axis: Axis) {}
+const normalHelper = new Vector3()
+const pointHelper = new Vector3()
 
-const vectorHelper = new Vector3()
-
-const basePoint = new Vector3()
-const baseNormal = new Vector3()
-const point = new Vector3()
-const normal = new Vector3()
-
-const fromEuler = new Euler()
-const toEuler = new Euler()
-
-export function splitAngle(primitive: Primitive, from: number, to: number, position: Vector3, axis: Axis) {
-    let radius = 0
-    const amount = primitive.pointAmount
-    for (let i = 0; i < amount; i++) {
-        primitive.getPoint(i, vectorHelper)
-        const d = position.distanceTo(vectorHelper)
-        if (d > radius) {
-            radius = d
-        }
-    }
-
-    setEuler(from, axis, fromEuler)
-    setAxis(axis, baseNormal)
-    baseNormal.applyEuler(fromEuler)
-
-    setEuler(to, axis, toEuler)
-    setAxis(axis, normal)
-    normal.applyEuler(toEuler)
-
-    basePoint.copy(baseNormal).multiplyScalar(radius)
-    basePoint.add(position)
-    point.copy(normal).multiplyScalar(radius)
-    position.add(position)
-
-    return split(primitive, basePoint, baseNormal, point, normal, radius / 2)
+export function splitAxis(primitive: Primitive, by: number, axis: Axis, radius?: number) {
+    getBoundingSphere(primitive, sphere)
+    setAxis(axis, normalHelper)
+    pointHelper.copy(normalHelper).multiplyScalar(sphere.radius)
+    pointHelper.add(sphere.center)
+    const [resultRadius, depth] = getDepthAndRadius(primitive, pointHelper, normalHelper, radius)
+    pointHelper.copy(normalHelper).multiplyScalar(sphere.radius + depth + by)
+    pointHelper.add(sphere.center)
+    return _split(primitive, pointHelper, normalHelper, resultRadius, -by)
 }
 
-function setAxis(axis: Axis, vector: Vector3) {
+const eulerHelper = new Euler()
+
+export function splitAngle(
+    primitive: Primitive,
+    from: number,
+    to: number,
+    point: Vector3,
+    axis: Axis,
+    radius?: number
+) {
+    setRotationAxis(axis, normalHelper)
+    setEuler(from, axis, eulerHelper)
+    normalHelper.applyEuler(eulerHelper)
+    const [resultRadius1, depth1] = getDepthAndRadius(primitive, point, normalHelper, radius)
+    const [outerFrom, innerFrom] = _split(primitive, point, normalHelper, resultRadius1, depth1)
+
+    setRotationAxis(axis, normalHelper)
+    setEuler(to, axis, eulerHelper)
+    normalHelper.applyEuler(eulerHelper)
+    const [resultRadius2, depth2] = getDepthAndRadius(primitive, point, normalHelper, radius)
+    const [innerTo, outerTo] = _split(primitive, point, normalHelper, resultRadius2, depth2)
+    return [boolean3d("intersect", innerFrom, innerTo), boolean3d("union", outerFrom, outerTo)]
+}
+
+function setRotationAxis(axis: Axis, vector: Vector3) {
     vector.set(0, 0, 0)
     switch (axis) {
         case Axis.X:
@@ -101,6 +138,21 @@ function setAxis(axis: Axis, vector: Vector3) {
             break
         case Axis.Z:
             vector.x = 1
+            break
+    }
+}
+
+function setAxis(axis: Axis, vector: Vector3) {
+    vector.set(0, 0, 0)
+    switch (axis) {
+        case Axis.X:
+            vector.x = 1
+            break
+        case Axis.Y:
+            vector.y = 1
+            break
+        case Axis.Z:
+            vector.z = 1
             break
     }
 }

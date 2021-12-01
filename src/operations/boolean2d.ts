@@ -3,7 +3,7 @@ import { CombinedPrimitive, FacePrimitive, Polygon, Primitive } from ".."
 import PolyBool from "polybooljs"
 import { Matrix4, Path, Plane, Shape, Vector2, Vector3 } from "three"
 
-PolyBool.epsilon(0.00001)
+PolyBool.epsilon(0.0001)
 
 const helperPlane = new Plane()
 const helperMatrix = new Matrix4()
@@ -109,4 +109,10 @@ function group(group: Array<[Polygon, Matrix4]>): Array<[Segment, Plane, Matrix4
 
 function planeIsEqual(p1: Plane, p2: Plane): boolean {
     return Math.abs(1 - p1.normal.dot(p2.normal)) < 0.001 && Math.abs(p1.constant - p2.constant) < 0.001
+}
+
+function distance(x1: number, y1: number, x2: number, y2: number) {
+    const x = x1 - x2
+    const y = y1 - y2
+    return Math.sqrt(x * x + y * y)
 }

@@ -45,7 +45,7 @@ export class CombinedPrimitive extends Primitive {
             }
             offset += amount
         }
-        throw `out of index ${index} when using "getPoint"`
+        throw new Error(`out of index ${index} when using "getPoint"`)
     }
 
     componentArray(type: number): Array<Primitive> {
@@ -85,7 +85,7 @@ export class CombinedPrimitive extends Primitive {
             return undefined
         }
         const merged = mergeBufferGeometries(disposableBuffers)!
-        const result = mergeVertices(merged)
+        const result = mergeVertices(merged, 0.001)
         merged.dispose()
         return result
     }

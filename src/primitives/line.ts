@@ -32,7 +32,7 @@ export class LinePrimitive extends Primitive {
             helperMatrix.multiply(makeTranslationMatrix(this.length, 0, 0))
             target.setFromMatrixPosition(helperMatrix)
         } else {
-            throw `out of index ${index} when using "getPoint"`
+            throw new Error(`out of index ${index} when using "getPoint"`)
         }
     }
 

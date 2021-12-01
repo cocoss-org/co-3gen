@@ -8,10 +8,10 @@ export function boolean3d(operation: "union" | "intersect" | "subtract", p1: Pri
     const p1Geometry = p1.getGeometry(false)
     const p2Geometry = p2.getGeometry(false)
     if (p1Geometry == null || p2Geometry == null) {
-        throw `unable to execute 3d "${operation}" because of missing geometry`
+        return new CombinedPrimitive(new Matrix4(), [p1, p2])
     }
     const ownCSG = CSG.fromGeometry(p1Geometry)
     const foreignCSG = CSG.fromGeometry(p2Geometry)
     const resultCSG = ownCSG[operation](foreignCSG)
-    return CombinedPrimitive.fromGeometry(p1.matrix.clone(), resultCSG.toGeometry(p1.matrix))
+    return CombinedPrimitive.fromGeometry(new Matrix4(), resultCSG.toGeometry(new Matrix4()))
 }

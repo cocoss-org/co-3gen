@@ -16,8 +16,9 @@ import {
     LinePrimitive,
     split,
     setback,
-    splitAngle,
+    splitAxis,
     Axis,
+    splitAngle,
 } from "co-3gen"
 import { BoxBufferGeometry, Matrix4, Plane, Shape, Vector2, Vector3 } from "three"
 
@@ -135,11 +136,38 @@ const u = new CombinedPrimitive(new Matrix4(), [
 ])
  */
 
-const oo = splitAngle(f, 0, Math.PI / 2, new Vector3(0, 0, 0), Axis.Y)
+const stairAmount = 10
 
-export const test5 = oo
+const stairHeight = 0.3
 
-/*new CombinedPrimitive(new Matrix4(), [
-    setback(oo[0], 0.1),
-    setback(oo[1].applyMatrix(makeTranslationMatrix(0, 0.1, 0)), 0.1),
-])*/
+const zz = boolean2d("difference", outer, inner)
+const mm = zz.clone().applyMatrix(makeTranslationMatrix(0, stairHeight, 0))
+
+const pp = CombinedPrimitive.fromGeometry(new Matrix4(), new BoxBufferGeometry(1, stairHeight, 1)).setMatrix(
+    makeTranslationMatrix(0, stairHeight / 2, 0, new Matrix4())
+)
+
+const uu = CombinedPrimitive.fromGeometry(new Matrix4(), new BoxBufferGeometry(0.5, stairHeight, 0.5)).setMatrix(
+    makeTranslationMatrix(0, stairHeight / 2, 0, new Matrix4())
+)
+
+const ff = CombinedPrimitive.fromGeometry(
+    new Matrix4(),
+    new BoxBufferGeometry(0.5, stairHeight * stairAmount, 0.5)
+).setMatrix(makeTranslationMatrix(0, (stairHeight * stairAmount) / 2, 0, new Matrix4()))
+
+let tt: Primitive = boolean3d("subtract", pp, uu)
+
+const stair: Array<Primitive> = []
+
+const angle = (Math.PI * 2) / stairAmount
+
+for (let i = 0; i < 10; i++) {
+    const dd = splitAngle(tt, i * angle, (i + 1) * angle, new Vector3(), Axis.Y)
+    dd[0].applyMatrix(makeTranslationMatrix(0, stairHeight * i, 0))
+    stair.push(dd[0])
+    console.log(i)
+    tt = dd[1]
+}
+
+export const test5 = tt //new CombinedPrimitive(new Matrix4(), [...stair]) //new CombinedPrimitive(new Matrix4(), stair)
