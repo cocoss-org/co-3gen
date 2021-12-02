@@ -25,8 +25,8 @@ import {
     YAXIS,
 } from "."
 import { makeQuanterionMatrix, makeTranslationMatrix } from "../math"
-//@ts-ignore
-import PolyBool from "polybooljs"
+import { maths, booleans, primitives } from "@jscad/modeling"
+import type { Vec2 } from "@jscad/modeling/src/maths/vec2"
 
 const helperVector = new Vector3()
 const helper2Vector = new Vector3()
@@ -123,18 +123,7 @@ export class FacePrimitive extends Primitive {
     }
 
     protected computePolygons(): Array<[Polygon, Matrix4]> {
-        return [
-            [
-                {
-                    regions: [
-                        this.points.map((p) => [p.x, p.y] as [number, number]),
-                        ...this.holes.map((hole) => hole.map((p) => [p.x, p.y] as [number, number])),
-                    ],
-                    inverted: false,
-                },
-                this.matrix,
-            ],
-        ]
+        return [[toPolygon([this.points, ...this.holes]), this.matrix]]
     }
 
     /*extrude(extruder: (vec3: Vector3) => void): Primitive {
@@ -194,4 +183,17 @@ export class FacePrimitive extends Primitive {
             new Matrix4()
         )
     }
+}
+
+function toPolygon(array: Array<Array<Vector2>>): Polygon {
+    const points = array.map((value, i) => {
+        const polygonWithoutHoles: Array<Vec2> = value.map((vector) => [vector.x, vector.y])
+        if (i <= 0) {
+            polygonWithoutHoles.reverse()
+        }
+        return polygonWithoutHoles
+    }).filter(value => value.length > 2)
+    return primitives.polygon({
+        points,
+    })
 }

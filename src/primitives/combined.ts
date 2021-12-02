@@ -1,5 +1,5 @@
 import { Matrix4, Object3D, BufferGeometry, Vector3, Plane } from "three"
-import { FacePrimitive, Primitive, setupObject3D } from "."
+import { FacePrimitive, Polygon, Primitive, setupObject3D } from "."
 import { mergeBufferGeometries, mergeVertices } from "three/examples/jsm/utils/BufferGeometryUtils"
 import { filterNull, getTrianglesFromGeometry } from ".."
 import { boolean2d } from "../operations/boolean2d"
@@ -90,12 +90,15 @@ export class CombinedPrimitive extends Primitive {
         return result
     }
 
-    protected computePolygons(): Array<[any, Matrix4]> {
+    protected computePolygons(): Array<[Polygon, Matrix4]> {
         return this.primitives
             .map((primitive) =>
                 primitive
                     .getPolygons()
-                    .map<[any, Matrix4]>(([geometry, matrix]) => [geometry, matrix.clone().premultiply(this.matrix)])
+                    .map<[Polygon, Matrix4]>(([polygon, matrix]) => [
+                        polygon,
+                        matrix.clone().premultiply(this.matrix),
+                    ])
             )
             .reduce((v1, v2) => v1.concat(v2), [])
     }

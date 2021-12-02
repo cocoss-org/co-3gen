@@ -1,15 +1,13 @@
 import { Matrix4, BufferGeometry, Object3D, Vector3 } from "three"
 import { CombinedPrimitive } from "."
 import { CSG } from "three-csg-ts"
+import { primitives, utils, geometries } from "@jscad/modeling"
+
+export type Polygon = geometries.geom2.Geom2
 
 export const YAXIS = new Vector3(0, 1, 0)
 export const ZERO = new Vector3(0, 0, 0)
 const helperMatrix = new Matrix4()
-
-export type Polygon = {
-    regions: Array<Array<[number, number]>>,
-    inverted: boolean
-  }
 
 export function setupObject3D(object: Object3D, matrix: Matrix4): Object3D {
     object.matrixAutoUpdate = false

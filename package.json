@@ -6,7 +6,7 @@
     },
     "author": "Bela Bohlender",
     "dependencies": {
-        "polybooljs": "^1.2.0",
+        "@jscad/modeling": "^2.6.1",
         "three": "^0.134.0",
         "three-csg-ts": "^3.1.9",
         "three-stdlib": "^2.5.9"
