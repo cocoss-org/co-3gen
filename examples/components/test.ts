@@ -20,8 +20,18 @@ import {
     Axis,
     splitAngle,
 } from "co-3gen"
-import { BoxBufferGeometry, Matrix4, Plane, Shape, Vector2, Vector3 } from "three"
-import { booleans, primitives } from "@jscad/modeling"
+import {
+    BoxBufferGeometry,
+    Matrix4,
+    Plane,
+    PlaneBufferGeometry,
+    Shape,
+    SphereBufferGeometry,
+    TorusBufferGeometry,
+    Vector2,
+    Vector3,
+} from "three"
+import { booleans, primitives, expansions } from "@jscad/modeling"
 
 export const test0 = new FacePrimitive(
     new Matrix4(),
@@ -63,6 +73,7 @@ export const test1 = new CombinedPrimitive(new Matrix4(), results) //.components
 const x = CombinedPrimitive.fromGeometry(new Matrix4(), new BoxBufferGeometry())
 //
 const y = CombinedPrimitive.fromGeometry(new Matrix4(), new BoxBufferGeometry())
+    //.applyMatrix(makeTranslationMatrix(1.3, 0, 0))
     .applyMatrix(makeScaleMatrix(1.2, 0.8, 1.2))
     .applyMatrix(makeRotationMatrix(0, Math.PI / 4, 0))
 
@@ -74,8 +85,6 @@ export const test2 = boolean3d("union", h, h.clone().applyMatrix(makeTranslation
     ComponentType.Line
 )
 
-console.log("test2")
-
 const outer = new FacePrimitive(
     new Matrix4(),
     new Shape([new Vector2(-1, 1), new Vector2(1, 1), new Vector2(1, -1), new Vector2(-1, -1)])
@@ -86,19 +95,15 @@ const inner = new FacePrimitive(
     new Shape([new Vector2(-0.5, 0.5), new Vector2(0.5, 0.5), new Vector2(0.5, -0.5), new Vector2(-0.5, -0.5)])
 )
 
-inner.applyMatrix(makeTranslationMatrix(0.5, 0, 0))
-
 const bottom = boolean2d("subtract", outer, inner)
 const top = bottom.clone().applyMatrix(makeTranslationMatrix(0, 1, 0))
 
-export const test3 = bottom /*.components(ComponentType.Line) /*new CombinedPrimitive(new Matrix4(), [
+export const test3 = new CombinedPrimitive(new Matrix4(), [
     //bottom,
-    connect(bottom, top),
+    connect(top, bottom),
     top,
     bottom.applyMatrix(makeScaleMatrix(1, -1, 1)),
-])*/ //.components(ComponentType.Line)
-
-console.log("test3")
+]) //.components(ComponentType.Line)
 
 const o = new FacePrimitive(
     new Matrix4(),
@@ -122,8 +127,6 @@ const p = new CombinedPrimitive(
 
 export const test4 = p
 
-console.log("test4")
-
 const r = new FacePrimitive(
     new Matrix4(),
     new Shape([new Vector2(-2, 2), new Vector2(2, 2), new Vector2(10, -2), new Vector2(-0.5, -0.5)])
@@ -145,11 +148,10 @@ const u = new CombinedPrimitive(new Matrix4(), [
 ])
  */
 
-const stairAmount = 10
+const stairAmount = 20
 
-const stairHeight = 0.3
+const stairHeight = 0.1
 
-/*
 const zz = boolean2d("subtract", outer, inner)
 const mm = zz.clone().applyMatrix(makeTranslationMatrix(0, stairHeight, 0))
 
@@ -172,14 +174,42 @@ const stair: Array<Primitive> = []
 
 const angle = (Math.PI * 2) / stairAmount
 
-for (let i = 0; i < 10; i++) {
+for (let i = 0; i < stairAmount; i++) {
     const dd = splitAngle(tt, i * angle, (i + 1) * angle, new Vector3(), Axis.Y)
     dd[0].applyMatrix(makeTranslationMatrix(0, stairHeight * i, 0))
     stair.push(dd[0])
-    tt = dd[1]
 }
 
-export const test5 = tt //new CombinedPrimitive(new Matrix4(), [...stair]) //new CombinedPrimitive(new Matrix4(), stair)
+export const test5 = new CombinedPrimitive(new Matrix4(), [ff, ...stair]) //new CombinedPrimitive(new Matrix4(), stair)
 
-
-console.log("test5")*/
+export const test6 = boolean2d("intersect", FacePrimitive.fromPolygon(
+    new Matrix4(),
+    expansions.expand(
+        {
+            delta: 0.2,
+            corners: "round",
+        },
+        primitives.line([
+            [1, -1],
+            [0, 0],
+            [1, 1],
+            [2, 1],
+            [2, 2],
+            [3, 4],
+        ])
+    )
+), FacePrimitive.fromPolygon(
+    new Matrix4(),
+    expansions.expand(
+        {
+            delta: 0.2,
+            corners: "round",
+        },
+        primitives.line([
+            [1, 1],
+            [-2, 3],
+            [-2, 4],
+            [-3, 4],
+        ])
+    )
+))

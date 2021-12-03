@@ -12,6 +12,7 @@ import {
     Plane,
     DoubleSide,
     MeshPhongMaterial,
+    Path,
 } from "three"
 import {
     CombinedPrimitive,
@@ -27,6 +28,7 @@ import {
 import { makeQuanterionMatrix, makeTranslationMatrix } from "../math"
 import { maths, booleans, primitives } from "@jscad/modeling"
 import type { Vec2 } from "@jscad/modeling/src/maths/vec2"
+import pointInPolygon from "point-in-polygon"
 
 const helperVector = new Vector3()
 const helper2Vector = new Vector3()
@@ -66,6 +68,14 @@ export class FacePrimitive extends Primitive {
         target.applyMatrix4(this.matrix)
     }
 
+    static fromPolygon(matrix: Matrix4, polygon: Polygon): Primitive {
+        const faces = getClosedPaths(polygon.sides)
+        return new CombinedPrimitive(
+            matrix,
+            groupInside(faces).map((shape) => new FacePrimitive(new Matrix4(), shape))
+        )
+    }
+
     static fromPointsOnPlane(matrix: Matrix4, plane: Plane, points: Array<Vector3>): Primitive {
         quaternionHelper.setFromUnitVectors(YAXIS, plane.normal)
         matrix.multiply(makeQuanterionMatrix(quaternionHelper)).multiply(makeTranslationMatrix(0, -plane.constant, 0))
@@ -85,6 +95,7 @@ export class FacePrimitive extends Primitive {
         const shape = new Shape(points.map((point) => point.clone()))
         return new FacePrimitive(
             matrix
+                .clone()
                 .multiply(makeQuanterionMatrix(quaternionHelper))
                 .multiply(makeTranslationMatrix(0, plane.constant, 0)),
             shape
@@ -123,7 +134,7 @@ export class FacePrimitive extends Primitive {
     }
 
     protected computePolygons(): Array<[Polygon, Matrix4]> {
-        return [[toPolygon([this.points, ...this.holes]), this.matrix]]
+        return [[toPolygon([this.points, ...this.holes]), this.matrix.clone()]]
     }
 
     /*extrude(extruder: (vec3: Vector3) => void): Primitive {
@@ -186,14 +197,92 @@ export class FacePrimitive extends Primitive {
 }
 
 function toPolygon(array: Array<Array<Vector2>>): Polygon {
-    const points = array.map((value, i) => {
-        const polygonWithoutHoles: Array<Vec2> = value.map((vector) => [vector.x, vector.y])
-        if (i <= 0) {
-            polygonWithoutHoles.reverse()
-        }
-        return polygonWithoutHoles
-    }).filter(value => value.length > 2)
+    const points = array
+        .map((value, i) => {
+            const polygonWithoutHoles: Array<Vec2> = value.map((vector) => [vector.x, vector.y])
+            if (i <= 0) {
+                polygonWithoutHoles.reverse()
+            }
+            return polygonWithoutHoles
+        })
+        .filter((value) => value.length > 2)
     return primitives.polygon({
         points,
     })
+}
+
+function groupInside(faces: Array<Array<Vec2>>): Array<Shape> {
+    const shapes = new Map<Array<Vec2>, Array<Array<Vec2>>>()
+    faces.forEach((face) => {
+        const outer = faces.find((f) => f != face && pointInPolygon(face[0], f))
+        if (outer == null) {
+            if (!shapes.has(face)) {
+                shapes.set(face, [])
+            }
+        } else {
+            let holes = shapes.get(outer)
+            if (holes == null) {
+                holes = []
+                shapes.set(outer, holes)
+            }
+            holes.push(face)
+        }
+    })
+    return Array.from(shapes.entries()).map(([points, holes]) => {
+        const shape = new Shape(points.map((point) => new Vector2(...point)))
+        shape.holes = holes.map((points) => new Path(points.map((point) => new Vector2(...point))))
+        return shape
+    })
+}
+
+function getClosedPaths(sides: Array<[Vec2, Vec2]>): Array<Array<Vec2>> {
+    const sidesCopy = [...sides]
+    const closedPaths: Array<Array<Vec2>> = []
+    let index = 0
+    while (sidesCopy.length > 0) {
+        if (closedPaths[index] == null) {
+            closedPaths[index] = [sidesCopy[0][0], sidesCopy[0][1]]
+            sidesCopy.splice(0, 1)
+        }
+
+        const nextPointIndex = getNextPoint(last(closedPaths[index]), sidesCopy)
+
+        if (nextPointIndex == null) {
+            index++
+            continue
+        }
+
+        const [next, i] = nextPointIndex
+        sidesCopy.splice(i, 1)
+
+        if (distance(closedPaths[index][0], next) < 0.001) {
+            index++
+        } else {
+            closedPaths[index].push(next)
+        }
+    }
+    return closedPaths
+}
+
+function last<T>(array: Array<T>): T {
+    return array[array.length - 1]
+}
+
+function getNextPoint(last: Vec2, edges: Array<[Vec2, Vec2]>): [Vec2, number] | undefined {
+    for (let i = 0; i < edges.length; i++) {
+        const [v1, v2] = edges[i]
+        if (distance(last, v1) < 0.001) {
+            return [v2, i]
+        }
+        if (distance(last, v2) < 0.001) {
+            return [v1, i]
+        }
+    }
+    return undefined
+}
+
+function distance([x1, y1]: Vec2, [x2, y2]: Vec2): number {
+    const x = x1 - x2
+    const y = y1 - y2
+    return Math.sqrt(x * x + y * y)
 }

@@ -31,7 +31,7 @@ export class CombinedPrimitive extends Primitive {
                     triangle.c,
                 ])
             }) as [Primitive])
-        ).setMatrix(matrix)
+        )
     }
 
     getPoint(index: number, target: Vector3): void {
@@ -95,10 +95,7 @@ export class CombinedPrimitive extends Primitive {
             .map((primitive) =>
                 primitive
                     .getPolygons()
-                    .map<[Polygon, Matrix4]>(([polygon, matrix]) => [
-                        polygon,
-                        matrix.clone().premultiply(this.matrix),
-                    ])
+                    .map<[Polygon, Matrix4]>(([polygon, matrix]) => [polygon, matrix.clone().premultiply(this.matrix)])
             )
             .reduce((v1, v2) => v1.concat(v2), [])
     }
