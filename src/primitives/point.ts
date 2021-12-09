@@ -30,7 +30,7 @@ export class PointPrimitive extends Primitive {
         }
     }
 
-    toObject3D(): Object3D {
+    computeObject3D(): Object3D {
         return setupObject3D(
             new Points(
                 new BufferGeometry().setFromPoints([new Vector3()]),

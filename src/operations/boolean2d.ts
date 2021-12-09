@@ -1,18 +1,9 @@
 import { CombinedPrimitive, FacePrimitive, Polygon, Primitive } from ".."
-import { Box2, Matrix4, Path, Plane, Shape, Vector2, Vector3 } from "three"
-import { primitives, booleans, transforms } from "@jscad/modeling"
-import pointInPolygon from "point-in-polygon"
+import { Matrix4, Plane, Vector3 } from "three"
+import { primitives, booleans } from "@jscad/modeling"
 import type { Vec2 } from "@jscad/modeling/src/maths/vec2"
-import { polygon } from "@jscad/modeling/src/primitives"
 
 const helperPlane = new Plane()
-
-function multipleOperations(operation: keyof typeof booleans, ...polygons: Array<Polygon>) {
-    return polygons.reduce<undefined | Polygon>(
-        (prev, polygon) => (prev == null ? polygon : booleans[operation](prev, polygon)),
-        undefined
-    )
-}
 
 export function boolean2d(operation: keyof typeof booleans, p1: Primitive, ...primitves: Array<Primitive>): Primitive {
     const ownPolygons = p1.getPolygons()
@@ -77,11 +68,12 @@ function group(group: Array<[Polygon, Matrix4]>): Array<[Array<Polygon>, Plane, 
 
 function convertPolygon(polygon: Polygon, matrix: Matrix4, toInvertMatrix: Matrix4) {
     return primitives.polygon({
-        points: polygon.sides.map(([[x, y]]) => {
-            helperVector.set(x, 0, y)
-            helperVector.applyMatrix4(matrix).applyMatrix4(toInvertMatrix)
-            return [helperVector.x, helperVector.z] as Vec2
-        }),
+        points: polygon.sides
+            .map(([[x, y]]) => {
+                helperVector.set(x, 0, y)
+                helperVector.applyMatrix4(matrix).applyMatrix4(toInvertMatrix)
+                return [helperVector.x, helperVector.z] as Vec2
+            }),
     })
 }
 

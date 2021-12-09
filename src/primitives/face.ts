@@ -69,10 +69,9 @@ export class FacePrimitive extends Primitive {
     }
 
     static fromPolygon(matrix: Matrix4, polygon: Polygon): Primitive {
-        const faces = getClosedPaths(polygon.sides)
         return new CombinedPrimitive(
             matrix,
-            groupInside(faces).map((shape) => new FacePrimitive(new Matrix4(), shape))
+            fromPolygon(polygon).map((shape) => new FacePrimitive(new Matrix4(), shape))
         )
     }
 
@@ -183,7 +182,7 @@ export class FacePrimitive extends Primitive {
         }
     }
 
-    toObject3D(): Object3D {
+    computeObject3D(): Object3D {
         return setupObject3D(
             new Mesh(
                 this.getGeometry(false),
@@ -198,22 +197,18 @@ export class FacePrimitive extends Primitive {
 
 function toPolygon(array: Array<Array<Vector2>>): Polygon {
     const points = array
-        .map((value, i) => {
-            const polygonWithoutHoles: Array<Vec2> = value.map((vector) => [vector.x, vector.y])
-            if (i <= 0) {
-                polygonWithoutHoles.reverse()
-            }
-            return polygonWithoutHoles
-        })
+        .map((value) => value.map<Vec2>((vector) => [vector.x, vector.y]).reverse())
         .filter((value) => value.length > 2)
     return primitives.polygon({
         points,
     })
 }
 
-function groupInside(faces: Array<Array<Vec2>>): Array<Shape> {
+function fromPolygon(polygon: Polygon): Array<Shape> {
+    const faces = getClosedPolygons(polygon.sides)
     const shapes = new Map<Array<Vec2>, Array<Array<Vec2>>>()
     faces.forEach((face) => {
+        face.reverse()
         const outer = faces.find((f) => f != face && pointInPolygon(face[0], f))
         if (outer == null) {
             if (!shapes.has(face)) {
@@ -235,7 +230,7 @@ function groupInside(faces: Array<Array<Vec2>>): Array<Shape> {
     })
 }
 
-function getClosedPaths(sides: Array<[Vec2, Vec2]>): Array<Array<Vec2>> {
+function getClosedPolygons(sides: Array<[Vec2, Vec2]>): Array<Array<Vec2>> {
     const sidesCopy = [...sides]
     const closedPaths: Array<Array<Vec2>> = []
     let index = 0

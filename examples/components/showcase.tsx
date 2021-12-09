@@ -16,7 +16,7 @@ export default function Showcase({ primitive }: { primitive: Primitive }) {
             <gridHelper />
             <pointLight position={[3, 3, 3]} />
             <ambientLight />
-            <primitive object={primitive.toObject3D()} />
+            <primitive object={primitive.getObject3D(true)} />
         </Canvas>
     )
 }

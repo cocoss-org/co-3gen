@@ -56,7 +56,7 @@ export class LinePrimitive extends Primitive {
         }
     }
 
-    toObject3D(): Object3D {
+    computeObject3D(): Object3D {
         return setupObject3D(
             new Line(
                 new BufferGeometry().setFromPoints([new Vector3(), new Vector3(this.length, 0, 0)]),

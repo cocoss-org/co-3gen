@@ -56,9 +56,9 @@ export class CombinedPrimitive extends Primitive {
         return results
     }
 
-    toObject3D(): Object3D {
+    computeObject3D(): Object3D {
         const object3d = setupObject3D(new Object3D(), this.matrix)
-        this.primitives.forEach((primitive) => object3d.add(primitive.toObject3D()))
+        this.primitives.forEach((primitive) => object3d.add(primitive.getObject3D(true)))
         return object3d
     }
 

@@ -34,8 +34,7 @@ export function sample2d(primitive: Primitive, maxTries: number = 1000): Primiti
     const hits: Intersection<Object3D<Event>>[] = []
     let tries = 0
 
-    //TODO: cache object3D
-    const object = primitive.toObject3D()
+    const object = primitive.getObject3D(false)
 
     while (hits.length === 0) {
         if (tries >= maxTries) {

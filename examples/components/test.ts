@@ -100,7 +100,7 @@ const top = bottom.clone().applyMatrix(makeTranslationMatrix(0, 1, 0))
 
 export const test3 = new CombinedPrimitive(new Matrix4(), [
     //bottom,
-    connect(top, bottom),
+    connect(bottom, top),
     top,
     bottom.applyMatrix(makeScaleMatrix(1, -1, 1)),
 ]) //.components(ComponentType.Line)
@@ -182,12 +182,12 @@ for (let i = 0; i < stairAmount; i++) {
 
 export const test5 = new CombinedPrimitive(new Matrix4(), [ff, ...stair]) //new CombinedPrimitive(new Matrix4(), stair)
 
-export const test6 = boolean2d("intersect", FacePrimitive.fromPolygon(
+const l1 = FacePrimitive.fromPolygon(
     new Matrix4(),
     expansions.expand(
         {
             delta: 0.2,
-            corners: "round",
+            corners: "edge",
         },
         primitives.line([
             [1, -1],
@@ -198,12 +198,14 @@ export const test6 = boolean2d("intersect", FacePrimitive.fromPolygon(
             [3, 4],
         ])
     )
-), FacePrimitive.fromPolygon(
+)
+
+const l2 = FacePrimitive.fromPolygon(
     new Matrix4(),
     expansions.expand(
         {
             delta: 0.2,
-            corners: "round",
+            corners: "edge",
         },
         primitives.line([
             [1, 1],
@@ -212,4 +214,6 @@ export const test6 = boolean2d("intersect", FacePrimitive.fromPolygon(
             [-3, 4],
         ])
     )
-))
+)
+
+export const test6 = boolean2d("union", l1, l2).components(ComponentType.Line)

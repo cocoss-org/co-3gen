@@ -31,12 +31,20 @@ export abstract class Primitive {
     private geometryCache: BufferGeometry | null | undefined = null
     private polygonsCache: Array<[Polygon, Matrix4]> | null = null
     private csgCache: CSG | null | undefined = null
+    private object3DCache: Object3D | null = null
 
     applyMatrix(matrix: Matrix4): Primitive {
         this.matrix.multiply(matrix)
         this.geometryCache = null
         this.csgCache = null
         return this
+    }
+
+    getObject3D(clone: boolean): Object3D {
+        if (this.object3DCache === null) {
+            this.object3DCache = this.computeObject3D()
+        }
+        return clone ? this.object3DCache.clone() : this.object3DCache
     }
 
     /**
@@ -103,7 +111,7 @@ export abstract class Primitive {
     abstract getPoint(index: number, target: Vector3): void
 
     protected abstract componentArray(type: number): Array<Primitive>
-    abstract toObject3D(): Object3D
+    protected abstract computeObject3D(): Object3D
     abstract clone(): Primitive
     protected abstract computeGeometry(): BufferGeometry | undefined
     protected abstract computePolygons(): Array<[Polygon, Matrix4]>
