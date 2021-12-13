@@ -51,7 +51,7 @@ export class FacePrimitive extends Primitive {
     }
 
     getPoint(index: number, target: Vector3): void {
-        let offset: number = 0
+        let offset = 0
         let point: Vector2 | undefined = undefined
         for (let i = 0; i < this.holes.length + 1; i++) {
             const polygon = i === 0 ? this.points : this.holes[i - 1]

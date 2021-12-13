@@ -68,12 +68,11 @@ function group(group: Array<[Polygon, Matrix4]>): Array<[Array<Polygon>, Plane, 
 
 function convertPolygon(polygon: Polygon, matrix: Matrix4, toInvertMatrix: Matrix4) {
     return primitives.polygon({
-        points: polygon.sides
-            .map(([[x, y]]) => {
-                helperVector.set(x, 0, y)
-                helperVector.applyMatrix4(matrix).applyMatrix4(toInvertMatrix)
-                return [helperVector.x, helperVector.z] as Vec2
-            }),
+        points: polygon.sides.map(([[x, y]]) => {
+            helperVector.set(x, 0, y)
+            helperVector.applyMatrix4(matrix).applyMatrix4(toInvertMatrix)
+            return [helperVector.x, helperVector.z] as Vec2
+        }),
     })
 }
 

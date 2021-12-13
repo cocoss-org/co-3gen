@@ -7,7 +7,7 @@ export function filterNull<T>(val: T | null | undefined): val is T {
 export function getTrianglesFromGeometry(bufferGeometry: BufferGeometry): Array<Triangle> {
     const index = bufferGeometry.getIndex()
     const position = bufferGeometry.getAttribute("position")
-    let toTriangle = (
+    const toTriangle = (
         index != null ? getTriangleFromIndexGeometry.bind(null, index) : getTriangleFromUnindexGeometry
     ).bind(null, position)
     return new Array((index?.count ?? position.count) / 3).fill(null).map((_, i) => toTriangle(i * 3))
