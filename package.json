@@ -1,6 +1,6 @@
 {
     "name": "co-3gen",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "scripts": {
         "build": "tsc",
         "check": "run-s check:prettier check:eslint",

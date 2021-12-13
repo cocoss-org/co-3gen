@@ -6,7 +6,7 @@
         "esModuleInterop": true,
         "jsx": "react",
         "strict": true,
-        "target": "ES6",
+        "target": "ES5",
         "lib": ["DOM", "ES2018"],
         "outDir": "dist",
         "experimentalDecorators": true
