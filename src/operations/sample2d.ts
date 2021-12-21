@@ -27,7 +27,7 @@ const helperQuaternion = new Quaternion()
 
 const MINIUS_Z = new Vector3(0, 0, -1)
 
-export function sample2d(primitive: Primitive, maxTries: number = 1000): Primitive {
+export function sample2d(primitive: Primitive, maxTries = 1000): Primitive {
     if (!getBoundingSphere(primitive, helperSphere)) {
         return new CombinedPrimitive(primitive.matrix.clone(), [])
     }

@@ -49,7 +49,7 @@ export class CombinedPrimitive extends Primitive {
     }
 
     componentArray(type: number): Array<Primitive> {
-        let results = this.primitives
+        const results = this.primitives
             .map((primitive) => primitive["componentArray"](type))
             .reduce((v1, v2) => v1.concat(v2), [])
         results.forEach((p) => p.matrix.premultiply(this.matrix))

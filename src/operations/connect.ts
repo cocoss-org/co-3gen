@@ -11,7 +11,7 @@ const matrixHelper = new Matrix4()
 const planeHelper = new Plane()
 
 function connectPoint(matrix: Matrix4, points: [Vector3, Vector3], invertFace: boolean): Primitive {
-    if(invertFace) {
+    if (invertFace) {
         points.reverse()
     }
     matrixHelper.copy(matrix).invert()
@@ -20,7 +20,7 @@ function connectPoint(matrix: Matrix4, points: [Vector3, Vector3], invertFace: b
 }
 
 function connectLine(matrix: Matrix4, points: [Vector3, Vector3, Vector3], invertFace: boolean): Primitive {
-    if(invertFace) {
+    if (invertFace) {
         points.reverse()
     }
     matrixHelper.copy(matrix).invert()
@@ -93,7 +93,12 @@ export const connectAll: PrimitiveConnectSelect = (primitives, options) => {
 
 const vectors = new Array(4).fill(null).map(() => new Vector3())
 
-export function connect(p1: Primitive, p2: Primitive, select: PrimitiveConnectSelect = connectNearest, invertFace: boolean = false): Primitive {
+export function connect(
+    p1: Primitive,
+    p2: Primitive,
+    select: PrimitiveConnectSelect = connectNearest,
+    invertFace = false
+): Primitive {
     const foreignPrimitives = p2["componentArray"](ComponentType.Line | ComponentType.Point)
     const ownPrimitives = p1["componentArray"](ComponentType.Line | ComponentType.Point)
 
