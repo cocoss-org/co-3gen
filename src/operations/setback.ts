@@ -98,7 +98,7 @@ function setbackPolygon(polygon: Array<Primitive>, by: number): Array<Primitive>
     })
 }
 
-export function groupInPolygons(lines: Array<Primitive>, keepUnclosed: boolean = false): Array<Array<Primitive>> {
+export function groupInPolygons(lines: Array<Primitive>, keepUnclosed = false): Array<Array<Primitive>> {
     const linesCopy = [...lines]
     const result: Array<Array<Primitive>> = []
     let i = 0
