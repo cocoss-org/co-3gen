@@ -8,7 +8,7 @@ const quaternionHelper = new Quaternion()
 
 export function expand(primitives: Array<Primitive>, plane: Plane, delta: number) {
     const lines = primitives.reduce<Array<LinePrimitive>>(
-        (v1, v2) => v1.concat(v2.components(ComponentType.Line) as LinePrimitive[]),
+        (v1, v2) => v1.concat(v2["componentArray"](ComponentType.Line) as LinePrimitive[]),
         []
     )
 

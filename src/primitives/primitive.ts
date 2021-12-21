@@ -1,6 +1,7 @@
 import { Matrix4, BufferGeometry, Object3D, Vector3 } from "three"
 import { CSG } from "three-csg-ts"
 import { geometries } from "@jscad/modeling"
+import { CombinedPrimitive } from "."
 
 export type Polygon = geometries.geom2.Geom2
 
@@ -85,12 +86,19 @@ export abstract class Primitive {
         this.polygonsCache = null
     }
 
-    components(type: number, select?: (primtive: Primitive) => boolean): Array<Primitive> {
+    components(type: number, select?: (primtive: Primitive) => boolean): Primitive {
         let primitives = this.componentArray(type)
         if (select != null) {
             primitives = primitives.filter(select)
         }
-        return primitives
+        helperMatrix.copy(this.matrix)
+        helperMatrix.invert()
+        primitives.forEach((primitive) => primitive.matrix.premultiply(helperMatrix))
+        return new CombinedPrimitive(this.matrix.clone(), primitives)
+    }
+
+    setMatrix(matrix: Matrix4): Primitive {
+        return new CombinedPrimitive(matrix, this.componentArray(0b111))
     }
 
     //abstract applyMatrixToGeometry(matrix: Matrix4): void;

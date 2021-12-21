@@ -59,7 +59,6 @@ let previous = new FacePrimitive(
 ).components(ComponentType.Line)
 
 const results: Array<Primitive> = []
-/*
 for (let i = 0; i < 100; i++) {
     const current = previous
         .clone()
@@ -68,7 +67,7 @@ for (let i = 0; i < 100; i++) {
         .applyMatrix(makeScaleMatrix(0.99, 0.99, 0.99))
     results.push(connect(previous, current))
     previous = current
-}*/
+}
 
 export const test1 = new CombinedPrimitive(new Matrix4(), results) //.components(ComponentType.Line)
 
@@ -83,9 +82,9 @@ const k = boolean3d("subtract", x, y)
 
 const h = boolean3d("union", k, k.clone().applyMatrix(makeTranslationMatrix(1, 0, 0)))
 
-export const test2 = boolean3d("union", h, h.clone().applyMatrix(makeTranslationMatrix(0, 0, 1))) /*.components(
+export const test2 = boolean3d("union", h, h.clone().applyMatrix(makeTranslationMatrix(0, 0, 1))).components(
     ComponentType.Line
-)*/
+)
 
 const outer = new FacePrimitive(
     new Matrix4(),
@@ -157,19 +156,17 @@ const stairHeight = 0.1
 const zz = boolean2d("subtract", outer, inner)
 const mm = zz.clone().applyMatrix(makeTranslationMatrix(0, stairHeight, 0))
 
-const pp = CombinedPrimitive.fromGeometry(new Matrix4(), new BoxBufferGeometry(1, stairHeight, 1))
-/*.setMatrix(
+const pp = CombinedPrimitive.fromGeometry(new Matrix4(), new BoxBufferGeometry(1, stairHeight, 1)).setMatrix(
     makeTranslationMatrix(0, stairHeight / 2, 0, new Matrix4())
-)*/
+)
 
-const uu = CombinedPrimitive.fromGeometry(new Matrix4(), new BoxBufferGeometry(0.5, stairHeight, 0.5))
-/*.setMatrix(
+const uu = CombinedPrimitive.fromGeometry(new Matrix4(), new BoxBufferGeometry(0.5, stairHeight, 0.5)).setMatrix(
     makeTranslationMatrix(0, stairHeight / 2, 0, new Matrix4())
-)*/
+)
 
 const ff = CombinedPrimitive.fromGeometry(new Matrix4(), new BoxBufferGeometry(0.5, stairHeight * stairAmount, 0.5)) //.setMatrix(makeTranslationMatrix(0, (stairHeight * stairAmount) / 2, 0, new Matrix4()))
 
-let tt: Primitive = boolean3d("subtract", pp, uu)
+const tt: Primitive = boolean3d("subtract", pp, uu)
 
 const stair: Array<Primitive> = []
 
