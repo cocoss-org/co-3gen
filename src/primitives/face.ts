@@ -230,6 +230,10 @@ function fromPolygon(polygon: Polygon): Array<Shape> {
     })
 }
 
+export function planeToQuanternion(plane: Plane, target: Quaternion): void {
+    target.setFromUnitVectors(YAXIS, plane.normal)
+}
+
 function getClosedPolygons(sides: Array<[Vec2, Vec2]>): Array<Array<Vec2>> {
     const sidesCopy = [...sides]
     const closedPaths: Array<Array<Vec2>> = []

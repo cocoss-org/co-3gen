@@ -19,6 +19,8 @@ import {
     splitAxis,
     Axis,
     splitAngle,
+    expand,
+    YAXIS,
 } from "co-3gen"
 import {
     BoxBufferGeometry,
@@ -31,7 +33,7 @@ import {
     Vector2,
     Vector3,
 } from "three"
-import { booleans, primitives, expansions } from "@jscad/modeling"
+import { booleans, expansions } from "@jscad/modeling"
 
 export const test0 = new FacePrimitive(
     new Matrix4(),
@@ -57,7 +59,7 @@ let previous = new FacePrimitive(
 ).components(ComponentType.Line)
 
 const results: Array<Primitive> = []
-
+/*
 for (let i = 0; i < 100; i++) {
     const current = previous
         .clone()
@@ -66,7 +68,7 @@ for (let i = 0; i < 100; i++) {
         .applyMatrix(makeScaleMatrix(0.99, 0.99, 0.99))
     results.push(connect(previous, current))
     previous = current
-}
+}*/
 
 export const test1 = new CombinedPrimitive(new Matrix4(), results) //.components(ComponentType.Line)
 
@@ -81,9 +83,9 @@ const k = boolean3d("subtract", x, y)
 
 const h = boolean3d("union", k, k.clone().applyMatrix(makeTranslationMatrix(1, 0, 0)))
 
-export const test2 = boolean3d("union", h, h.clone().applyMatrix(makeTranslationMatrix(0, 0, 1))).components(
+export const test2 = boolean3d("union", h, h.clone().applyMatrix(makeTranslationMatrix(0, 0, 1))) /*.components(
     ComponentType.Line
-)
+)*/
 
 const outer = new FacePrimitive(
     new Matrix4(),
@@ -155,18 +157,17 @@ const stairHeight = 0.1
 const zz = boolean2d("subtract", outer, inner)
 const mm = zz.clone().applyMatrix(makeTranslationMatrix(0, stairHeight, 0))
 
-const pp = CombinedPrimitive.fromGeometry(new Matrix4(), new BoxBufferGeometry(1, stairHeight, 1)).setMatrix(
+const pp = CombinedPrimitive.fromGeometry(new Matrix4(), new BoxBufferGeometry(1, stairHeight, 1))
+/*.setMatrix(
     makeTranslationMatrix(0, stairHeight / 2, 0, new Matrix4())
-)
+)*/
 
-const uu = CombinedPrimitive.fromGeometry(new Matrix4(), new BoxBufferGeometry(0.5, stairHeight, 0.5)).setMatrix(
+const uu = CombinedPrimitive.fromGeometry(new Matrix4(), new BoxBufferGeometry(0.5, stairHeight, 0.5))
+/*.setMatrix(
     makeTranslationMatrix(0, stairHeight / 2, 0, new Matrix4())
-)
+)*/
 
-const ff = CombinedPrimitive.fromGeometry(
-    new Matrix4(),
-    new BoxBufferGeometry(0.5, stairHeight * stairAmount, 0.5)
-).setMatrix(makeTranslationMatrix(0, (stairHeight * stairAmount) / 2, 0, new Matrix4()))
+const ff = CombinedPrimitive.fromGeometry(new Matrix4(), new BoxBufferGeometry(0.5, stairHeight * stairAmount, 0.5)) //.setMatrix(makeTranslationMatrix(0, (stairHeight * stairAmount) / 2, 0, new Matrix4()))
 
 let tt: Primitive = boolean3d("subtract", pp, uu)
 
@@ -182,38 +183,50 @@ for (let i = 0; i < stairAmount; i++) {
 
 export const test5 = new CombinedPrimitive(new Matrix4(), [ff, ...stair]) //new CombinedPrimitive(new Matrix4(), stair)
 
-const l1 = FacePrimitive.fromPolygon(
-    new Matrix4(),
-    expansions.expand(
-        {
-            delta: 0.2,
-            corners: "edge",
-        },
-        primitives.line([
-            [1, -1],
-            [0, 0],
-            [1, 1],
-            [2, 1],
-            [2, 2],
-            [3, 4],
-        ])
+const lines = [
+    //line1
+    [
+        [1, -1],
+        [0, 0],
+    ],
+    [
+        [0, 0],
+        [1, 1],
+    ],
+    //line2
+    [
+        [1, 1],
+        [2, 1],
+    ],
+    [
+        [2, 1],
+        [2, 2],
+    ],
+    [
+        [2, 2],
+        [3, 4],
+    ],
+    //line3
+    [
+        [1, 1],
+        [-2, 3],
+    ],
+    [
+        [-2, 3],
+        [-2, 4],
+    ],
+    [
+        [-2, 4],
+        [-3, 4],
+    ],
+] as const
+
+const primitives = lines.map((line) =>
+    LinePrimitive.fromPoints(
+        new Matrix4(),
+        new Vector3(line[0][0], 0, line[0][1]),
+        new Vector3(line[1][0], 0, line[1][1])
     )
 )
 
-const l2 = FacePrimitive.fromPolygon(
-    new Matrix4(),
-    expansions.expand(
-        {
-            delta: 0.2,
-            corners: "edge",
-        },
-        primitives.line([
-            [1, 1],
-            [-2, 3],
-            [-2, 4],
-            [-3, 4],
-        ])
-    )
-)
-
-export const test6 = boolean2d("union", l1, l2).components(ComponentType.Line)
+export const test6 = expand(primitives, new Plane(YAXIS), 0.2)

@@ -98,7 +98,7 @@ function setbackPolygon(polygon: Array<Primitive>, by: number): Array<Primitive>
     })
 }
 
-export function groupInPolygons(lines: Array<Primitive>): Array<Array<Primitive>> {
+export function groupInPolygons(lines: Array<Primitive>, keepUnclosed: boolean = false): Array<Array<Primitive>> {
     const linesCopy = [...lines]
     const result: Array<Array<Primitive>> = []
     let i = 0
@@ -111,7 +111,11 @@ export function groupInPolygons(lines: Array<Primitive>): Array<Array<Primitive>
         const nextLineIndex = linesCopy.findIndex((line) => isNextLine(last(result[i]), line))
 
         if (nextLineIndex === -1) {
-            result.splice(i, 1)
+            if (keepUnclosed) {
+                i++
+            } else {
+                result.splice(i, 1)
+            }
             continue
         }
 
@@ -124,7 +128,7 @@ export function groupInPolygons(lines: Array<Primitive>): Array<Array<Primitive>
             i++
         }
     }
-    if (result[i] != null) {
+    if (result[i] != null && !keepUnclosed) {
         result.splice(i, 1)
     }
     return result
