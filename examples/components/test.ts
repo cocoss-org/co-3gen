@@ -226,4 +226,4 @@ const primitives = lines.map((line) =>
     )
 )
 
-export const test6 = expand(primitives, new Plane(YAXIS), 0.2)
+export const test6 = expand(new CombinedPrimitive(new Matrix4(), primitives), new Plane(YAXIS), 0.2)
